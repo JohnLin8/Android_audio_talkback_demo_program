@@ -66,6 +66,10 @@ class MainActivityHandler extends Handler
         Vibrate, //主界面消息：振动。
     }
 
+    /**
+     * function: just make buttons enable or disable, no other operations. ---- by JohnLin
+     * @param MessagePt  消息。
+     */
     public void handleMessage( Message MessagePt )
     {
         switch( Msg.values()[ MessagePt.what ] )
@@ -396,7 +400,10 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
             String p_InfoStrPt = "扩展目录完整绝对路径：" + m_ExternalDirFullAbsPathStrPt;
             Log.i( m_CurClsNameStrPt, p_InfoStrPt );
-            Message p_MessagePt = new Message();p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();p_MessagePt.obj = p_InfoStrPt;m_MainActivityHandlerPt.sendMessage( p_MessagePt );
+            Message p_MessagePt = new Message();
+            p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
+            p_MessagePt.obj = p_InfoStrPt;
+            m_MainActivityHandlerPt.sendMessage( p_MessagePt );
         }
     }
 
