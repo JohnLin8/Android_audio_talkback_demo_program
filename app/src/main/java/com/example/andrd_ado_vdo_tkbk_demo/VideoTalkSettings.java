@@ -29,6 +29,7 @@ public class VideoTalkSettings {
     public enum AudioOutputMode {
         SPEAKER, EARPIECE
     }
+
     //视频输入摄像头：前置、后置
     public enum VideoInputCamera {
         FRONT, BACK
@@ -89,6 +90,7 @@ public class VideoTalkSettings {
     public enum AudioSampleRate {
         IS_8K, IS_16K, IS_32K, IS_48K
     }
+
     //音频帧长度：10ms、20ms、30ms
     public enum AudioFrameLength {
         IS_10MS, IS_20MS, IS_30MS
@@ -109,8 +111,7 @@ public class VideoTalkSettings {
         NONE, SPEEX, WEBRTC_FIXED, WEBRTC_FLOAT, RNNOISE
     }
 
-    //使用Speex预处理器
-    public static final boolean USE_SPEEX_PREPROCESSOR = false;
+
 
     //编解码器：PCM原始数据、Speex
     public static final int CODEC_PCM = 0;
@@ -174,28 +175,71 @@ public class VideoTalkSettings {
     }
 
     //================SpeexWebRTC三重声学回音消除器参数================
-    //回音消除器：工作模式--0:Speex+WebRtc定点版、1:WebRTC定点版+WebRtc浮点版、2:Speex+WebRTC浮点版+WebRtc浮点版
-    public static class TripleEchoCanceller{
-        public static final int MODE_SPEEX_WEBRTC_FIXED = 1;  //工作模式--1:Speex+WebRtc定点版
-        public static final int MODE_WEBRTC_FIXED_FLOAT = 2;  //工作模式--1:WebRTC定点版+WebRtc浮点版
-        public static final int MODE_SPEEX_WEBRTC_FLOAT = 3;  //工作模式--2:Speex+WebRTC浮点版+WebRtc浮点版
+    public static class TripleEchoCanceller {
+        //工作模式，取值区间为[1,3]
+        public static final int MODE_SPEEX_WEBRTC_FIXED = 1; //Speex声学回音消除器+WebRtc定点版声学回音消除器
+        public static final int MODE_WEBRTC_FIXED_FLOAT = 2; //WebRtc定点版声学回音消除器+WebRtc浮点版声学回音消除器
+        public static final int MODE_SPEEX_WEBRTC_FLOAT = 3; //Speex声学回音消除器+WebRtc定点版声学回音消除器+WebRtc浮点版声学回音消除器
 
+        //Speex声学回音消除器参数
+        public static final int SPEEX_AEC_FILTER_LENGTH = 500; //滤波器数据长度，单位毫秒
+        public static final int SPEEX_AEC_USE_REVERSE = 1; //使用残余回音消除
+        public static final float SPEEX_AEC_REVERSE_MULTIPLE = 1.0f; //在残余回音消除时，残余回音的倍数，倍数越大消除越强，取值区间为[0.0,100.0]
+        public static final float SPEEX_AEC_REVERSE_LAST_ACTIVE = 0.6f; //在残余回音消除时，残余回音的持续系数，系数越大消除越强，取值区间为[0.0,0.9]
+        public static final int SPEEX_AEC_REVERSE_SUPPRESS_MAX_DB = -32768; //在残余回音消除时，残余回音最大衰减的分贝值，分贝值越小衰减越大，取值区间为[-32768-214748364801]
+        public static final int SPEEX_AEC_REVERSE_SUPPRESS_ACTIVE_MAX_DB = -32768; //有近端语音活动时，在残余回音消除时，残余回音最大衰减的分贝值，分贝值越小衰减越大，取值区间为[-2147483648,0]
 
+        //WebRtc定点版声学回音消除器参数
+        public static final int WEBRTC_FIXED_AEC_USE_COMFORT_NOISE = 0; //使用舒适噪音生成模式
+        public static final int WEBRTC_FIXED_AEC_SUPPRESS_LEVEL = 4; //消除模式，消除模式越高消除越强，取值区间为[0,4]
+        public static final int WEBRTC_FIXED_AEC_DELAY = 0; //回音延迟，单位毫秒，取值区间为[-2147483648.2147483647]，为0表示自适应设置
+
+        //WebRtc浮点版声学回音消除器参数
+        public static final int WEBRTC_FLOAT_AEC_SUPPRESS_LEVEL = 2; //消除模式，消除模式越高消除越强，取值区间为[0, 2]
+        public static final int WEBRTC_FLOAT_AEC_DELAY = 0; //回音延迟，单位毫秒,取值区间为[-2147483648,2147483647]，为0表示自适应设置
+        public static final int WEBRTC_FLOAT_AEC_USE_DELAY_AGNOSTIC = 1; //使用回音延迟不可知模式
+        public static final int WEBRTC_FLOAT_AEC_USE_EXPERIMENTAL_AGC = 1; //使用扩展滤波器模式
+        public static final int WEBRTC_FLOAT_AEC_USE_REFINED_FILTER_ADAPTATION = 0; //使用精制滤波器自适应Aec模式
+        public static final int WEBRTC_FLOAT_AEC_USE_ADAPTIVE_DELAY = 1; //使用自适应调节回音的延迟
+
+        //同一房间声学回音消除参数
+        public static final int USE_SIMULTANEOUS_SPEECH_DETECTION = 1; //使用同一房间声学回音消除
+        public static final int MIN_VAD_SATISFIED_MS = 380; //同一房间回音最小延迟，单位毫秒，取值区间为[1,2147483647]
     }
 
-    //Triple Acoustic Echo Canceller
+    /*
+    Speex预处理器设置
+    使用语音活动检测：1
+    在语音活动检测时，从无语音活动到有语音活动的判断百分比概率，概率越大越难判断为有语音活，取值区简为[0,100]:95
+    在语音活动检测时，从有语音活动到无语音活动的判断百分比概率，概率越大越容易判断为无语音活动，取值区间为[0,100]:95
 
-    public static final int SPEEX_WEBRTC_AEC_MODE = 2;
+    使用自动增益控制: 1
+    自动增益控制时，增益的目标等级，目标等级越大增益越大，取值区间为[1,2147483647]: 20000
+    在自动增益控制时，每秒最大增益的分贝值，分贝值越大增益越大，取值区间为[0,2147483647]：10
 
-    //Speex回音消除使用残余回音消除：上面已经定义了
+    在自动增益控制时，每秒最大减益的分贝值，分贝值越小减益越大，取值区间为[-2147483648, 0]：-200
+    在自动增益控制时，最大增益的分贝值，分贝值越大增益越大，取值区间为[0,2147483647]: 20
+    */
+    public static class SpeexPreprocessor {
+        //使用Speex预处理器
+        public static final int USE_SPEEX_PREPROCESSOR = 1;
+        //使用语音活动检测，默认为1
+        public static final int USE_VOICEACTIVITY_DETECTION = 1;
+        //在语音活动检测时，从无语音活动到有语音活动的判断百分比概率，概率越大越难判断为有语音活，取值区间为[0,100]
+        public static final int VAD_PROB_START_SPEECH = 95;
+        //在语音活动检测时，从有语音活动到无语音活动的判断百分比概率，概率越大越容易判断为无语音活动，取值区间为[0,100]
+        public static final int VAD_PROB_STOP_SPEECH = 95;
+        //使用自动增益控制（AGC），默认为0
+        public static final int USE_AGC = 1;
+        //自动增益控制时，增益的目标等级，目标等级越大增益越大，取值区间为[1, 2147483647]
+        public static final int AGC_TARGET_LEVEL_DBFS = 20000;
+        //在自动增益控制时，每秒最大增益的分贝值，分贝值越大增益越大，取值区间为[0,2147483647]
+        public static final int AGC_MAX_DB_PER_SEC = 10;
+        //在自动增益控制时，每秒最大减益的分贝值，分贝值越小减益越大，取值区间为[-2147483648, 0]
+        public static final int AGC_MAX_GAIN_DB = -200;
+        //在自动增益控制时，最大增益的分贝值，分贝值越大增益越大，取值区间为[0,2147483647]
+        public static final int AGC_TARGET_GAIN_DB = 20;
+    }
 
-    //WebRTC定点版回音消除：上面已经定义了
-
-    //WebRTC浮点版回音消除：上面已经定义了
-
-    //使用同一房间声学回音消除
-    public static final boolean SPEEX_WEBRTC_AEC_USE_UNITY_ROOM = true;
-    //同一房间声学最小延迟ms,取值范围[1,2147483647]
-    public static final int SPEEX_WEBRTC_AEC_UNITY_ROOM_MIN_DELAY = 380;
 
 }
