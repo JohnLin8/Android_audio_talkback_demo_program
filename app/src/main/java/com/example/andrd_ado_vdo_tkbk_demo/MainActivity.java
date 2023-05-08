@@ -1,5 +1,7 @@
 package com.example.andrd_ado_vdo_tkbk_demo;
 
+import static com.example.andrd_ado_vdo_tkbk_demo.VideoTalkSettings.*;
+
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -74,7 +76,7 @@ class MainActivityHandler extends Handler {
             case MediaPocsThrdInit: {
 
                 //创建并绑定前台服务，从而确保本进程在转入后台或系统锁屏时不会被系统限制运行，且只能放在主线程中执行，因为要使用界面。
-                if (((CheckBox) m_MainActivityPt.m_StngLyotViewPt.findViewById(R.id.IsUseFrgndSrvcCkBoxId)).isChecked() && (m_FrgndSrvcCnctPt == null)) {
+                if (m_FrgndSrvcCnctPt == null) {  //这里有个是否前台服务判断，先固定使用前台服务 ---- by JohnLin
                     m_FrgndSrvcCnctPt = new ServiceConnection() //创建存放前台服务连接器。
                     {
                         @Override
@@ -215,21 +217,6 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
             m_MainLyotViewPt = p_LyotInflater.inflate(R.layout.main_lyot, null);
 
-            m_XfrPrtclStngLyotViewPt = p_LyotInflater.inflate(R.layout.xfr_prtcl_stng_lyot, null);
-            m_StngLyotViewPt = p_LyotInflater.inflate(R.layout.stng_lyot, null);
-
-            m_AjbStngLyotViewPt = p_LyotInflater.inflate(R.layout.ajb_stng_lyot, null);
-            m_SpeexAecStngLyotViewPt = p_LyotInflater.inflate(R.layout.speex_aec_stng_lyot, null);
-            m_WebRtcAecmStngLyotViewPt = p_LyotInflater.inflate(R.layout.webrtc_aecm_stng_lyot, null);
-            m_WebRtcAecStngLyotViewPt = p_LyotInflater.inflate(R.layout.webrtc_aec_stng_lyot, null);
-            m_SpeexWebRtcAecStngLyotViewPt = p_LyotInflater.inflate(R.layout.speex_webrtc_aec_stng_lyot, null);
-            m_SpeexPrpocsNsStngLyotViewPt = p_LyotInflater.inflate(R.layout.speex_prpocs_ns_stng_lyot, null);
-            m_WebRtcNsxStngLyotViewPt = p_LyotInflater.inflate(R.layout.webrtc_nsx_stng_lyot, null);
-            m_WebRtcNsStngLyotViewPt = p_LyotInflater.inflate(R.layout.webrtc_ns_stng_lyot, null);
-            m_SpeexPrpocsStngLyotViewPt = p_LyotInflater.inflate(R.layout.speex_prpocs_stng_lyot, null);
-            m_SpeexCodecStngLyotViewPt = p_LyotInflater.inflate(R.layout.speex_codec_stng_lyot, null);
-            m_OpenH264CodecStngLyotViewPt = p_LyotInflater.inflate(R.layout.openh264_codec_stng_lyot, null);
-            m_SystemH264CodecStngLyotViewPt = p_LyotInflater.inflate(R.layout.systemh264_codec_stng_lyot, null);
         }
 
         //显示布局。
@@ -327,9 +314,9 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             ((Spinner) m_StngLyotViewPt.findViewById(R.id.VdoFrmSzPrsetSpinnerId)).setAdapter(p_VdoFrmSzAdapter);
         }
 
-        //设置默认设置。
-        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseEffectSuperRdBtnId)).performClick(); //默认效果等级：超。
-        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseBitrateSuperRdBtnId)).performClick(); //默认比特率等级：超。
+        //设置默认设置
+        OnClickUseEffectSuperRdBtn(null);   //默认效果等级：超。
+        OnClickUseBitrateSuperRdBtn(null);  //默认比特率等级：超。
 
         //获取扩展目录完整绝对路径字符串。
         {
@@ -577,122 +564,45 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                     m_MyMediaPocsThrdPt.m_IsAutoAllowCnct = (((CheckBox) m_XfrPrtclStngLyotViewPt.findViewById(R.id.IsAutoAllowCnctCkBoxId)).isChecked()) ? 1 : 0;
                 }
 
-                //设置是否使用链表。
-                if (((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseLnkLstRecvOtptFrmRdBtnId)).isChecked()) {
-                    m_MyMediaPocsThrdPt.m_UseWhatRecvOtptFrm = 0;
+                //设置是否使用链表。不使用链表
+                //使用自己设计的自适应抖动缓冲器。
+                m_MyMediaPocsThrdPt.m_UseWhatRecvOtptFrm = 1;
+                {
+                    //音频参数
+                    m_MyMediaPocsThrdPt.m_AAjbPt.m_MinNeedBufFrmCnt = AdaptiveJitterBuffer.AUDIO_MIN_FRAME_NUM;
+                    m_MyMediaPocsThrdPt.m_AAjbPt.m_MaxNeedBufFrmCnt = AdaptiveJitterBuffer.AUDIO_MAX_FRAME_NUM;
+                    m_MyMediaPocsThrdPt.m_AAjbPt.m_MaxCntuLostFrmCnt = AdaptiveJitterBuffer.AUDIO_MAX_DROP_FRAME_NUM;
+                    m_MyMediaPocsThrdPt.m_AAjbPt.m_AdaptSensitivity = AdaptiveJitterBuffer.AUDIO_ADAPTIVE_SENSITIVITY;
+                    //视频参数
+                    m_MyMediaPocsThrdPt.m_VAjbPt.m_MinNeedBufFrmCnt = AdaptiveJitterBuffer.VIDEO_MIN_FRAME_NUM;
+                    m_MyMediaPocsThrdPt.m_VAjbPt.m_MaxNeedBufFrmCnt = AdaptiveJitterBuffer.VIDEO_MAX_FRAME_NUM;
+                    m_MyMediaPocsThrdPt.m_VAjbPt.m_AdaptSensitivity = AdaptiveJitterBuffer.VIDEO_ADAPTIVE_SENSITIVITY;
                 }
 
-                //设置是否使用自己设计的自适应抖动缓冲器。
-                if (((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseAjbRecvOtptFrmRdBtnId)).isChecked()) {
-                    m_MyMediaPocsThrdPt.m_UseWhatRecvOtptFrm = 1;
+                //默认打印Logcat日志、显示Toast。
+                m_MyMediaPocsThrdPt.SetIsPrintLogcatShowToast(1,1,this);
 
-                    try {
-                        m_MyMediaPocsThrdPt.m_AAjbPt.m_MinNeedBufFrmCnt = Integer.parseInt(((TextView) m_AjbStngLyotViewPt.findViewById(R.id.AAjbMinNeedBufFrmCntEdTxtId)).getText().toString());
-                        m_MyMediaPocsThrdPt.m_AAjbPt.m_MaxNeedBufFrmCnt = Integer.parseInt(((TextView) m_AjbStngLyotViewPt.findViewById(R.id.AAjbMaxNeedBufFrmCntEdTxtId)).getText().toString());
-                        m_MyMediaPocsThrdPt.m_AAjbPt.m_MaxCntuLostFrmCnt = Integer.parseInt(((TextView) m_AjbStngLyotViewPt.findViewById(R.id.AAjbMaxCntuLostFrmCntEdTxtId)).getText().toString());
-                        m_MyMediaPocsThrdPt.m_AAjbPt.m_AdaptSensitivity = Float.parseFloat(((TextView) m_AjbStngLyotViewPt.findViewById(R.id.AAjbAdaptSensitivityEdTxtId)).getText().toString());
+                //默认使用唤醒锁。
+                m_MyMediaPocsThrdPt.SetIsUseWakeLock(1);
 
-                        m_MyMediaPocsThrdPt.m_VAjbPt.m_MinNeedBufFrmCnt = Integer.parseInt(((TextView) m_AjbStngLyotViewPt.findViewById(R.id.VAjbMinNeedBufFrmCntEdTxtId)).getText().toString());
-                        m_MyMediaPocsThrdPt.m_VAjbPt.m_MaxNeedBufFrmCnt = Integer.parseInt(((TextView) m_AjbStngLyotViewPt.findViewById(R.id.VAjbMaxNeedBufFrmCntEdTxtId)).getText().toString());
-                        m_MyMediaPocsThrdPt.m_VAjbPt.m_AdaptSensitivity = Float.parseFloat(((TextView) m_AjbStngLyotViewPt.findViewById(R.id.VAjbAdaptSensitivityEdTxtId)).getText().toString());
-                    } catch (NumberFormatException e) {
-                        Toast.makeText(this, "请输入数字", Toast.LENGTH_LONG).show();
-                        break Out;
-                    }
-                }
-
-                //设置是否打印Logcat日志、显示Toast。
-                m_MyMediaPocsThrdPt.SetIsPrintLogcatShowToast(
-                        (((CheckBox) m_StngLyotViewPt.findViewById(R.id.IsPrintLogcatShowToastCkBoxId)).isChecked()) ? 1 : 0,
-                        (((CheckBox) m_StngLyotViewPt.findViewById(R.id.IsPrintLogcatShowToastCkBoxId)).isChecked()) ? 1 : 0,
-                        this);
-
-                //设置是否使用唤醒锁。
-                m_MyMediaPocsThrdPt.SetIsUseWakeLock((((CheckBox) m_StngLyotViewPt.findViewById(R.id.IsUseWakeLockCkBoxId)).isChecked()) ? 1 : 0);
-
-                //设置是否保存音视频输入输出到文件。
+                //默认不要保存音视频输入输出到文件。
                 m_MyMediaPocsThrdPt.SetIsSaveAdoVdoInptOtptToAviFile(
                         m_ExternalDirFullAbsPathStrPt + "/AdoVdoInptOtpt.avi",
-                        8 * 1024,
-                        (((CheckBox) m_StngLyotViewPt.findViewById(R.id.IsSaveAdoVdoInptOtptToAviFileCkBoxId)).isChecked()) ? 1 : 0,
-                        (((CheckBox) m_StngLyotViewPt.findViewById(R.id.IsSaveAdoVdoInptOtptToAviFileCkBoxId)).isChecked()) ? 1 : 0,
-                        (((CheckBox) m_StngLyotViewPt.findViewById(R.id.IsSaveAdoVdoInptOtptToAviFileCkBoxId)).isChecked()) ? 1 : 0,
-                        (((CheckBox) m_StngLyotViewPt.findViewById(R.id.IsSaveAdoVdoInptOtptToAviFileCkBoxId)).isChecked()) ? 1 : 0);
+                        8 * 1024,0,0,0,0);
 
                 //设置音频输入。
-                m_MyMediaPocsThrdPt.SetAdoInpt(
-                        (((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseAdoSmplRate8000RdBtnId)).isChecked()) ? 8000 :
-                                (((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseAdoSmplRate16000RdBtnId)).isChecked()) ? 16000 :
-                                        (((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseAdoSmplRate32000RdBtnId)).isChecked()) ? 32000 :
-                                                (((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseAdoSmplRate48000RdBtnId)).isChecked()) ? 48000 : 0,
-                        (((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseAdoFrmLen10msRdBtnId)).isChecked()) ? 10 :
-                                (((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseAdoFrmLen20msRdBtnId)).isChecked()) ? 20 :
-                                        (((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseAdoFrmLen30msRdBtnId)).isChecked()) ? 30 : 0);
+                m_MyMediaPocsThrdPt.SetAdoInpt(16000,20);
 
                 //设置音频输入是否使用系统自带的声学回音消除器、噪音抑制器和自动增益控制器。
                 m_MyMediaPocsThrdPt.AdoInptSetIsUseSystemAecNsAgc(
                         (((CheckBox) m_StngLyotViewPt.findViewById(R.id.IsUseSystemAecNsAgcCkBoxId)).isChecked()) ? 1 : 0);
 
-                if (m_MyMediaPocsThrdPt.mTalkNetwork.m_XfrMode == 0) //如果传输模式为实时半双工（一键通）。
+
+                //如果传输模式为实时全双工。
                 {
-                    m_MyMediaPocsThrdPt.AdoInptSetUseNoAec();
-                } else //如果传输模式为实时全双工。
-                {
-                    //设置音频输入是否不使用声学回音消除器。
-                    if (((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseNoAecRdBtnId)).isChecked()) {
-                        m_MyMediaPocsThrdPt.AdoInptSetUseNoAec();
-                    }
+                    //默认使用SpeexWebRtc三重声学回音消除器。
+                    m_MyMediaPocsThrdPt.AdoInptSetUseSpeexWebRtcAec(3,500,1,1.0f,0.6f,-32768,0,)
 
-                    //设置音频输入是否使用Speex声学回音消除器。
-                    if (((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseSpeexAecRdBtnId)).isChecked()) {
-                        try {
-                            m_MyMediaPocsThrdPt.AdoInptSetUseSpeexAec(
-                                    Integer.parseInt(((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecFilterLenMsecEdTxtId)).getText().toString()),
-                                    (((CheckBox) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecIsUseRecCkBoxId)).isChecked()) ? 1 : 0,
-                                    Float.parseFloat(((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecEchoMutpEdTxtId)).getText().toString()),
-                                    Float.parseFloat(((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecEchoCntuEdTxtId)).getText().toString()),
-                                    Integer.parseInt(((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecEchoSupesEdTxtId)).getText().toString()),
-                                    Integer.parseInt(((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecEchoSupesActEdTxtId)).getText().toString()),
-                                    (((CheckBox) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecIsSaveMemFileCkBoxId)).isChecked()) ? 1 : 0,
-                                    m_ExternalDirFullAbsPathStrPt + "/SpeexAecMem");
-                        } catch (NumberFormatException e) {
-                            Toast.makeText(this, "请输入数字", Toast.LENGTH_LONG).show();
-                            break Out;
-                        }
-                    }
-
-                    //设置音频输入是否使用WebRtc定点版声学回音消除器。
-                    if (((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseWebRtcAecmRdBtnId)).isChecked()) {
-                        try {
-                            m_MyMediaPocsThrdPt.AdoInptSetUseWebRtcAecm(
-                                    (((CheckBox) m_WebRtcAecmStngLyotViewPt.findViewById(R.id.WebRtcAecmIsUseCNGModeCkBoxId)).isChecked()) ? 1 : 0,
-                                    Integer.parseInt(((TextView) m_WebRtcAecmStngLyotViewPt.findViewById(R.id.WebRtcAecmEchoModeEdTxtId)).getText().toString()),
-                                    Integer.parseInt(((TextView) m_WebRtcAecmStngLyotViewPt.findViewById(R.id.WebRtcAecmDelayEdTxtId)).getText().toString()));
-                        } catch (NumberFormatException e) {
-                            Toast.makeText(this, "请输入数字", Toast.LENGTH_LONG).show();
-                            break Out;
-                        }
-                    }
-
-                    //设置音频输入是否使用WebRtc浮点版声学回音消除器。
-                    if (((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseWebRtcAecRdBtnId)).isChecked()) {
-                        try {
-                            m_MyMediaPocsThrdPt.AdoInptSetUseWebRtcAec(
-                                    Integer.parseInt(((TextView) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecEchoModeEdTxtId)).getText().toString()),
-                                    Integer.parseInt(((TextView) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecDelayEdTxtId)).getText().toString()),
-                                    (((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsUseDelayAgstcModeCkBoxId)).isChecked()) ? 1 : 0,
-                                    (((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsUseExtdFilterModeCkBoxId)).isChecked()) ? 1 : 0,
-                                    (((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsUseRefinedFilterAdaptAecModeCkBoxId)).isChecked()) ? 1 : 0,
-                                    (((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsUseAdaptAdjDelayCkBoxId)).isChecked()) ? 1 : 0,
-                                    (((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsSaveMemFileCkBoxId)).isChecked()) ? 1 : 0,
-                                    m_ExternalDirFullAbsPathStrPt + "/WebRtcAecMem");
-                        } catch (NumberFormatException e) {
-                            Toast.makeText(this, "请输入数字", Toast.LENGTH_LONG).show();
-                            break Out;
-                        }
-                    }
-
-                    //设置音频输入是否使用SpeexWebRtc三重声学回音消除器。
                     if (((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseSpeexWebRtcAecRdBtnId)).isChecked()) {
                         try {
                             m_MyMediaPocsThrdPt.AdoInptSetUseSpeexWebRtcAec(
