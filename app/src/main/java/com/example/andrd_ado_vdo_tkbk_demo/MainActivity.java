@@ -303,17 +303,6 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                     p_VolumeChangedActionIntentFilterPt);
         }
 
-        //设置视频的帧大小。
-        {
-            ArrayList<String> p_VdoFrmSzList = new ArrayList<String>();
-            p_VdoFrmSzList.add("120×160");
-            p_VdoFrmSzList.add("240×320");
-            p_VdoFrmSzList.add("480×640");
-            p_VdoFrmSzList.add("960×1280");
-            ArrayAdapter<String> p_VdoFrmSzAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, p_VdoFrmSzList);
-            ((Spinner) m_StngLyotViewPt.findViewById(R.id.VdoFrmSzPrsetSpinnerId)).setAdapter(p_VdoFrmSzAdapter);
-        }
-
         //设置默认设置
         OnClickUseEffectSuperRdBtn(null);   //默认效果等级：超。
         OnClickUseBitrateSuperRdBtn(null);  //默认比特率等级：超。
@@ -391,34 +380,6 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                 Log.i(m_CurClsNameStrPt, "结束请求并等待媒体处理线程退出。");
             }
             System.exit(0);
-        } else if (m_CurActivityLyotViewPt == m_XfrPrtclStngLyotViewPt) {
-            OnClickXfrPrtclStngOkBtn(null);
-        } else if (m_CurActivityLyotViewPt == m_StngLyotViewPt) {
-            OnClickStngOkBtn(null);
-        } else if (m_CurActivityLyotViewPt == m_SpeexAecStngLyotViewPt) {
-            OnClickSpeexAecStngOkBtn(null);
-        } else if (m_CurActivityLyotViewPt == m_WebRtcAecmStngLyotViewPt) {
-            OnClickWebRtcAecmStngOkBtn(null);
-        } else if (m_CurActivityLyotViewPt == m_WebRtcAecStngLyotViewPt) {
-            OnClickWebRtcAecStngOkBtn(null);
-        } else if (m_CurActivityLyotViewPt == m_SpeexWebRtcAecStngLyotViewPt) {
-            OnClickSpeexWebRtcAecStngOkBtn(null);
-        } else if (m_CurActivityLyotViewPt == m_SpeexPrpocsNsStngLyotViewPt) {
-            OnClickSpeexPrpocsNsStngOkBtn(null);
-        } else if (m_CurActivityLyotViewPt == m_WebRtcNsxStngLyotViewPt) {
-            OnClickWebRtcNsxStngOkBtn(null);
-        } else if (m_CurActivityLyotViewPt == m_WebRtcNsStngLyotViewPt) {
-            OnClickWebRtcNsStngOkBtn(null);
-        } else if (m_CurActivityLyotViewPt == m_SpeexPrpocsStngLyotViewPt) {
-            OnClickSpeexPrpocsStngOkBtn(null);
-        } else if (m_CurActivityLyotViewPt == m_SpeexCodecStngLyotViewPt) {
-            OnClickSpeexCodecStngOkBtn(null);
-        } else if (m_CurActivityLyotViewPt == m_OpenH264CodecStngLyotViewPt) {
-            OnClickOpenH264CodecStngOkBtn(null);
-        } else if (m_CurActivityLyotViewPt == m_SystemH264CodecStngLyotViewPt) {
-            OnClickSystemH264CodecStngOkBtn(null);
-        } else if (m_CurActivityLyotViewPt == m_AjbStngLyotViewPt) {
-            this.OnClickAjbStngOkBtn(null);
         }
     }
 
@@ -582,8 +543,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                 m_MyMediaPocsThrdPt.SetAdoInpt(16000, 20);
 
                 //设置音频输入是否使用系统自带的声学回音消除器、噪音抑制器和自动增益控制器。
-                m_MyMediaPocsThrdPt.AdoInptSetIsUseSystemAecNsAgc(
-                        (((CheckBox) m_StngLyotViewPt.findViewById(R.id.IsUseSystemAecNsAgcCkBoxId)).isChecked()) ? 1 : 0);
+                m_MyMediaPocsThrdPt.AdoInptSetIsUseSystemAecNsAgc(1);    //TODO: 是否使用系统自带的声学回音消除器、噪音抑制器和自动增益控制器。
 
 
                 //如果传输模式为实时全双工。
@@ -701,822 +661,789 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                 m_MyMediaPocsThrdPt.AdoOtptSetIsMute(0);
 
                 //设置视频输入。
-                if (((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseVdoFrmSzPrsetRdBtnId)).isChecked()) //如果要使用预设的帧大小。
-                {
-                    m_MyMediaPocsThrdPt.SetVdoInpt(
-                            12,
-                            640,
-                            480,
-                            0,
-                            null);   //TODO: HTSurfaceView
-
-                    //设置视频输入是否使用YU12原始数据。
-                    //m_MyMediaPocsThrdPt.VdoInptSetUseYU12();
-
-                    //设置视频输入是否使用OpenH264编码器。
-                    m_MyMediaPocsThrdPt.VdoInptSetUseOpenH264Encd(
-                            0,
-                            60,
-                            3,
-                            24,
-                            1);
-                    //设置视频输入是否使用系统自带H264编码器。
-                    //m_MyMediaPocsThrdPt.VdoInptSetUseSystemH264Encd(............);
-
-                    //设置视频输入使用的设备。
-                    m_MyMediaPocsThrdPt.VdoInptSetUseDvc(
-                            0,
-                            -1,
-                            -1);
-
-                    //设置视频输入是否黑屏。
-                    m_MyMediaPocsThrdPt.VdoInptSetIsBlack(0);
-
-                    //设置视频输出。
-                    m_MyMediaPocsThrdPt.VdoOtptAddStrm(0);
-                    m_MyMediaPocsThrdPt.VdoOtptSetStrm(
-                            0,
-                            null);    //TODO: HTSurfaceView
-
-                    //设置视频输出是否使用YU12原始数据。
-                    //m_MyMediaPocsThrdPt.VdoOtptSetStrmUseYU12(0);
+                m_MyMediaPocsThrdPt.SetVdoInpt(
+                        12,
+                        640,
+                        480,
+                        0,
+                        null);   //TODO: HTSurfaceView
 
 
-                    //设置视频输出是否使用OpenH264解码器。
-                    m_MyMediaPocsThrdPt.VdoOtptSetStrmUseOpenH264Decd(0, 0);
+                //设置视频输入是否使用YU12原始数据。
+                //m_MyMediaPocsThrdPt.VdoInptSetUseYU12();
 
-                    //设置视频输出是否使用系统自带H264解码器。
-                    //m_MyMediaPocsThrdPt.VdoOtptSetStrmUseSystemH264Decd(0);
+                //设置视频输入是否使用OpenH264编码器。
+                m_MyMediaPocsThrdPt.VdoInptSetUseOpenH264Encd(
+                        0,
+                        60,
+                        3,
+                        24,
+                        1);
+                //设置视频输入是否使用系统自带H264编码器。
+                //m_MyMediaPocsThrdPt.VdoInptSetUseSystemH264Encd(............);
 
-                    //设置视频输出是否黑屏。
-                    m_MyMediaPocsThrdPt.VdoOtptSetStrmIsBlack(
-                            0,
-                            0);
+                //设置视频输入使用的设备。
+                m_MyMediaPocsThrdPt.VdoInptSetUseDvc(
+                        0,
+                        -1,
+                        -1);
 
-                    //设置视频输出流是否使用。
-                    m_MyMediaPocsThrdPt.VdoOtptSetStrmIsUse(0, 1);
+                //设置视频输入是否黑屏。
+                m_MyMediaPocsThrdPt.VdoInptSetIsBlack(0);
 
-                    //设置本端对讲模式。
-                    m_MyMediaPocsThrdPt.SendUserMsg(
-                            MyMediaPocsThrd.UserMsgTyp.LclTkbkMode,
-                            (((RadioButton) m_MainLyotViewPt.findViewById(R.id.UseAdoTkbkModeRdBtnId)).isChecked()) ? MyMediaPocsThrd.TkbkMode.Ado :
-                                    (((RadioButton) m_MainLyotViewPt.findViewById(R.id.UseVdoTkbkModeRdBtnId)).isChecked()) ? MyMediaPocsThrd.TkbkMode.Vdo :
-                                            (((RadioButton) m_MainLyotViewPt.findViewById(R.id.UseAdoVdoTkbkModeRdBtnId)).isChecked()) ? MyMediaPocsThrd.TkbkMode.AdoVdo : MyMediaPocsThrd.TkbkMode.NoChg);
+                //设置视频输出。
+                m_MyMediaPocsThrdPt.VdoOtptAddStrm(0);
+                m_MyMediaPocsThrdPt.VdoOtptSetStrm(
+                        0,
+                        null);    //TODO: HTSurfaceView
 
-                    //设置是否保存设置到文件。
-                    //m_MyMediaPocsThrdPt.SaveStngToFile(m_ExternalDirFullAbsPathStrPt + "/Setting.txt");
-
-                    //启动媒体处理线程。
-                    m_MyMediaPocsThrdPt.start();
-
-                    Log.i(m_CurClsNameStrPt, "启动媒体处理线程完毕。");
-                } else {
-                    Log.i(m_CurClsNameStrPt, "开始请求并等待媒体处理线程退出。");
-                    m_MyMediaPocsThrdPt.m_IsInterrupt = 1;
-                    m_MyMediaPocsThrdPt.RqirExit(1, 1);
-                    Log.i(m_CurClsNameStrPt, "结束请求并等待媒体处理线程退出。");
-                }
-
-                p_Rslt = 0;
-            }
-
-            if (p_Rslt != 0) //如果启动媒体处理线程失败。
-            {
-                m_MyMediaPocsThrdPt = null;
-            }
-        }
+                //设置视频输出是否使用YU12原始数据。
+                //m_MyMediaPocsThrdPt.VdoOtptSetStrmUseYU12(0);
 
 
+                //设置视频输出是否使用OpenH264解码器。
+                m_MyMediaPocsThrdPt.VdoOtptSetStrmUseOpenH264Decd(0, 0);
 
-        //视频输入预览或视频输出显示Surface。
-        public void onClickVdoInptPrvwAndVdoOtptDspySurface (View ViewPt){
-            if (((LinearLayout) ViewPt.getParent().getParent()).getOrientation() == LinearLayout.HORIZONTAL) {
-                ((LinearLayout) ViewPt.getParent().getParent()).setOrientation(LinearLayout.VERTICAL);
+                //设置视频输出是否使用系统自带H264解码器。
+                //m_MyMediaPocsThrdPt.VdoOtptSetStrmUseSystemH264Decd(0);
+
+                //设置视频输出是否黑屏。
+                m_MyMediaPocsThrdPt.VdoOtptSetStrmIsBlack(
+                        0,
+                        0);
+
+                //设置视频输出流是否使用。
+                m_MyMediaPocsThrdPt.VdoOtptSetStrmIsUse(0, 1);
+
+                //设置本端对讲模式。
+                m_MyMediaPocsThrdPt.SendUserMsg(
+                        MyMediaPocsThrd.UserMsgTyp.LclTkbkMode,
+                        (((RadioButton) m_MainLyotViewPt.findViewById(R.id.UseAdoTkbkModeRdBtnId)).isChecked()) ? MyMediaPocsThrd.TkbkMode.Ado :
+                                (((RadioButton) m_MainLyotViewPt.findViewById(R.id.UseVdoTkbkModeRdBtnId)).isChecked()) ? MyMediaPocsThrd.TkbkMode.Vdo :
+                                        (((RadioButton) m_MainLyotViewPt.findViewById(R.id.UseAdoVdoTkbkModeRdBtnId)).isChecked()) ? MyMediaPocsThrd.TkbkMode.AdoVdo : MyMediaPocsThrd.TkbkMode.NoChg);
+
+                //设置是否保存设置到文件。
+                //m_MyMediaPocsThrdPt.SaveStngToFile(m_ExternalDirFullAbsPathStrPt + "/Setting.txt");
+
+                //启动媒体处理线程。
+                m_MyMediaPocsThrdPt.start();
+
+                Log.i(m_CurClsNameStrPt, "启动媒体处理线程完毕。");
             } else {
-                ((LinearLayout) ViewPt.getParent().getParent()).setOrientation(LinearLayout.HORIZONTAL);
+                Log.i(m_CurClsNameStrPt, "开始请求并等待媒体处理线程退出。");
+                m_MyMediaPocsThrdPt.m_IsInterrupt = 1;
+                m_MyMediaPocsThrdPt.RqirExit(1, 1);
+                Log.i(m_CurClsNameStrPt, "结束请求并等待媒体处理线程退出。");
             }
+
+            p_Rslt = 0;
         }
 
-        //清空日志按钮。
-        public void OnClickClearLogBtn (View ViewPt){
-            ((LinearLayout) m_MainLyotViewPt.findViewById(R.id.LogLinearLyotId)).removeAllViews();
-        }
-
-        //一键即按即通按钮。
-        @Override
-        public boolean onTouch (View ViewPt, MotionEvent EventPt){
-            if (ViewPt.getId() == R.id.PttBtnId) //如果是一键即按即通按钮。
-            {
-                switch (EventPt.getAction()) {
-                    case MotionEvent.ACTION_DOWN: //如果是按下消息。
-                    {
-                        if (m_MyMediaPocsThrdPt != null) {
-                            m_MyMediaPocsThrdPt.SendUserMsg(MyMediaPocsThrd.UserMsgTyp.PttBtnDown);
-                        }
-                        break;
-                    }
-                    case MotionEvent.ACTION_UP: //如果是弹起消息。
-                    {
-                        if (m_MyMediaPocsThrdPt != null) {
-                            m_MyMediaPocsThrdPt.SendUserMsg(MyMediaPocsThrd.UserMsgTyp.PttBtnUp);
-                        }
-                        break;
-                    }
-                }
-            }
-            return false;
-        }
-
-        //音频自适应抖动缓冲器设置按钮。
-        public void OnClickAjbStngBtn (View ViewPt){
-            setContentView(m_AjbStngLyotViewPt);
-            m_CurActivityLyotViewPt = m_AjbStngLyotViewPt;
-        }
-
-        //效果等级：低。
-        public void OnClickUseEffectLowRdBtn (View ViewPt){
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseEffectLowRdBtnId)).setChecked(true);
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseAdoSmplRate8000RdBtnId)).setChecked(true);
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseAdoFrmLen20msRdBtnId)).setChecked(true);
-            ((CheckBox) m_StngLyotViewPt.findViewById(R.id.IsUseSystemAecNsAgcCkBoxId)).setChecked(true);
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseWebRtcAecmRdBtnId)).setChecked(true);
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseSpeexPrpocsNsRdBtnId)).setChecked(true);
-            ((CheckBox) m_StngLyotViewPt.findViewById(R.id.IsUseSpeexPrpocsCkBoxId)).setChecked(true);
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseSpeexCodecRdBtnId)).setChecked(true);
-            ((CheckBox) m_StngLyotViewPt.findViewById(R.id.IsSaveAdoToWaveFileCkBoxId)).setChecked(true);
-            ((CheckBox) m_StngLyotViewPt.findViewById(R.id.IsDrawAdoWavfmToSurfaceCkBoxId)).setChecked(false);
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseVdoSmplRate12RdBtnId)).setChecked(true);
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseVdoFrmSzPrsetRdBtnId)).setChecked(true);
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseVdoFrmSzPrsetRdBtnId)).setChecked(true);
-            ((Spinner) m_StngLyotViewPt.findViewById(R.id.VdoFrmSzPrsetSpinnerId)).setSelection(0);
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseOpenH264CodecRdBtnId)).setChecked(true);
-
-            ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecFilterLenMsecEdTxtId)).setText("500");
-            ((CheckBox) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecIsUseRecCkBoxId)).setChecked(true);
-            ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecEchoMutpEdTxtId)).setText("3.0");
-            ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecEchoCntuEdTxtId)).setText("0.65");
-            ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecEchoSupesEdTxtId)).setText("-32768");
-            ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecEchoSupesActEdTxtId)).setText("-32768");
-            ((CheckBox) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecIsSaveMemFileCkBoxId)).setChecked(false);
-
-            ((CheckBox) m_WebRtcAecmStngLyotViewPt.findViewById(R.id.WebRtcAecmIsUseCNGModeCkBoxId)).setChecked(false);
-            ((TextView) m_WebRtcAecmStngLyotViewPt.findViewById(R.id.WebRtcAecmEchoModeEdTxtId)).setText("4");
-            ((TextView) m_WebRtcAecmStngLyotViewPt.findViewById(R.id.WebRtcAecmDelayEdTxtId)).setText("0");
-
-            ((TextView) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecEchoModeEdTxtId)).setText("2");
-            ((TextView) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecDelayEdTxtId)).setText("0");
-            ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsUseDelayAgstcModeCkBoxId)).setChecked(true);
-            ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsUseExtdFilterModeCkBoxId)).setChecked(true);
-            ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsUseRefinedFilterAdaptAecModeCkBoxId)).setChecked(false);
-            ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsUseAdaptAdjDelayCkBoxId)).setChecked(true);
-            ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsSaveMemFileCkBoxId)).setChecked(false);
-
-            ((RadioButton) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWorkModeSpeexAecWebRtcAecmRdBtnId)).setChecked(true);
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecFilterLenMsecEdTxtId)).setText("500");
-            ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecIsUseRecCkBoxId)).setChecked(true);
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecEchoMutpEdTxtId)).setText("1.0");
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecEchoCntuEdTxtId)).setText("0.6");
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecEchoSupesEdTxtId)).setText("-32768");
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecEchoSupesActEdTxtId)).setText("-32768");
-            ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecmIsUseCNGModeCkBoxId)).setChecked(false);
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecmEchoModeEdTxtId)).setText("4");
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecmDelayEdTxtId)).setText("0");
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecEchoModeEdTxtId)).setText("2");
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecDelayEdTxtId)).setText("0");
-            ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecIsUseDelayAgstcModeCkBoxId)).setChecked(true);
-            ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecIsUseExtdFilterModeCkBoxId)).setChecked(true);
-            ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecIsUseRefinedFilterAdaptAecModeCkBoxId)).setChecked(false);
-            ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecIsUseAdaptAdjDelayCkBoxId)).setChecked(true);
-            ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecIsUseSameRoomAecCkBoxId)).setChecked(false);
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSameRoomEchoMinDelayEdTxtId)).setText("380");
-
-            ((CheckBox) m_SpeexPrpocsNsStngLyotViewPt.findViewById(R.id.SpeexPrpocsIsUseNsCkBoxId)).setChecked(true);
-            ((TextView) m_SpeexPrpocsNsStngLyotViewPt.findViewById(R.id.SpeexPrpocsNoiseSupesEdTxtId)).setText("-32768");
-            ((CheckBox) m_SpeexPrpocsNsStngLyotViewPt.findViewById(R.id.SpeexPrpocsIsUseDereverbCkBoxId)).setChecked(true);
-
-            ((TextView) m_WebRtcNsxStngLyotViewPt.findViewById(R.id.WebRtcNsxPolicyModeEdTxtId)).setText("3");
-
-            ((TextView) m_WebRtcNsStngLyotViewPt.findViewById(R.id.WebRtcNsPolicyModeEdTxtId)).setText("3");
-
-            ((CheckBox) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsIsUseVadCkBoxId)).setChecked(true);
-            ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsVadProbStartEdTxtId)).setText("95");
-            ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsVadProbCntuEdTxtId)).setText("95");
-            ((CheckBox) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsIsUseAgcCkBoxId)).setChecked(false);
-            ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsAgcLevelEdTxtId)).setText("20000");
-            ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsAgcIncrementEdTxtId)).setText("10");
-            ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsAgcDecrementEdTxtId)).setText("-200");
-            ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsAgcMaxGainEdTxtId)).setText("20");
-
-            ((RadioButton) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexEncdUseCbrRdBtnId)).setChecked(true);
-            ((TextView) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexEncdCmplxtEdTxtId)).setText("1");
-            ((CheckBox) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexDecdIsUsePrcplEnhsmtCkBoxId)).setChecked(true);
-
-            ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdVdoTypeEdTxtId)).setText("0");
-            ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdBitrateCtrlModeEdTxtId)).setText("3");
-            ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdIDRFrmIntvlEdTxtId)).setText("12");
-            ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdCmplxtEdTxtId)).setText("0");
-
-            ((TextView) m_SystemH264CodecStngLyotViewPt.findViewById(R.id.SystemH264EncdBitrateCtrlModeEdTxtId)).setText("1");
-            ((TextView) m_SystemH264CodecStngLyotViewPt.findViewById(R.id.SystemH264EncdIDRFrmIntvlEdTxtId)).setText("1");
-            ((TextView) m_SystemH264CodecStngLyotViewPt.findViewById(R.id.SystemH264EncdCmplxtEdTxtId)).setText("0");
-        }
-
-        //效果等级：中。
-        public void OnClickUseEffectMidRdBtn (View ViewPt){
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseEffectMidRdBtnId)).setChecked(true);
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseAdoSmplRate16000RdBtnId)).setChecked(true);
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseAdoFrmLen20msRdBtnId)).setChecked(true);
-            ((CheckBox) m_StngLyotViewPt.findViewById(R.id.IsUseSystemAecNsAgcCkBoxId)).setChecked(true);
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseWebRtcAecRdBtnId)).setChecked(true);
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseWebRtcNsxRdBtnId)).setChecked(true);
-            ((CheckBox) m_StngLyotViewPt.findViewById(R.id.IsUseSpeexPrpocsCkBoxId)).setChecked(true);
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseSpeexCodecRdBtnId)).setChecked(true);
-            ((CheckBox) m_StngLyotViewPt.findViewById(R.id.IsSaveAdoToWaveFileCkBoxId)).setChecked(true);
-            ((CheckBox) m_StngLyotViewPt.findViewById(R.id.IsDrawAdoWavfmToSurfaceCkBoxId)).setChecked(false);
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseVdoSmplRate15RdBtnId)).setChecked(true);
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseVdoFrmSzPrsetRdBtnId)).setChecked(true);
-            ((Spinner) m_StngLyotViewPt.findViewById(R.id.VdoFrmSzPrsetSpinnerId)).setSelection(1);
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseOpenH264CodecRdBtnId)).setChecked(true);
-
-            ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecFilterLenMsecEdTxtId)).setText("500");
-            ((CheckBox) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecIsUseRecCkBoxId)).setChecked(true);
-            ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecEchoMutpEdTxtId)).setText("3.0");
-            ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecEchoCntuEdTxtId)).setText("0.65");
-            ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecEchoSupesEdTxtId)).setText("-32768");
-            ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecEchoSupesActEdTxtId)).setText("-32768");
-            ((CheckBox) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecIsSaveMemFileCkBoxId)).setChecked(false);
-
-            ((CheckBox) m_WebRtcAecmStngLyotViewPt.findViewById(R.id.WebRtcAecmIsUseCNGModeCkBoxId)).setChecked(false);
-            ((TextView) m_WebRtcAecmStngLyotViewPt.findViewById(R.id.WebRtcAecmEchoModeEdTxtId)).setText("4");
-            ((TextView) m_WebRtcAecmStngLyotViewPt.findViewById(R.id.WebRtcAecmDelayEdTxtId)).setText("0");
-
-            ((TextView) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecEchoModeEdTxtId)).setText("2");
-            ((TextView) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecDelayEdTxtId)).setText("0");
-            ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsUseDelayAgstcModeCkBoxId)).setChecked(true);
-            ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsUseExtdFilterModeCkBoxId)).setChecked(true);
-            ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsUseRefinedFilterAdaptAecModeCkBoxId)).setChecked(false);
-            ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsUseAdaptAdjDelayCkBoxId)).setChecked(true);
-            ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsSaveMemFileCkBoxId)).setChecked(false);
-
-            ((RadioButton) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWorkModeWebRtcAecmWebRtcAecRdBtnId)).setChecked(true);
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecFilterLenMsecEdTxtId)).setText("500");
-            ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecIsUseRecCkBoxId)).setChecked(true);
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecEchoMutpEdTxtId)).setText("1.0");
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecEchoCntuEdTxtId)).setText("0.6");
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecEchoSupesEdTxtId)).setText("-32768");
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecEchoSupesActEdTxtId)).setText("-32768");
-            ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecmIsUseCNGModeCkBoxId)).setChecked(false);
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecmEchoModeEdTxtId)).setText("4");
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecmDelayEdTxtId)).setText("0");
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecEchoModeEdTxtId)).setText("2");
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecDelayEdTxtId)).setText("0");
-            ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecIsUseDelayAgstcModeCkBoxId)).setChecked(true);
-            ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecIsUseExtdFilterModeCkBoxId)).setChecked(true);
-            ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecIsUseRefinedFilterAdaptAecModeCkBoxId)).setChecked(false);
-            ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecIsUseAdaptAdjDelayCkBoxId)).setChecked(true);
-            ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecIsUseSameRoomAecCkBoxId)).setChecked(false);
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSameRoomEchoMinDelayEdTxtId)).setText("380");
-
-            ((CheckBox) m_SpeexPrpocsNsStngLyotViewPt.findViewById(R.id.SpeexPrpocsIsUseNsCkBoxId)).setChecked(true);
-            ((TextView) m_SpeexPrpocsNsStngLyotViewPt.findViewById(R.id.SpeexPrpocsNoiseSupesEdTxtId)).setText("-32768");
-            ((CheckBox) m_SpeexPrpocsNsStngLyotViewPt.findViewById(R.id.SpeexPrpocsIsUseDereverbCkBoxId)).setChecked(true);
-
-            ((TextView) m_WebRtcNsxStngLyotViewPt.findViewById(R.id.WebRtcNsxPolicyModeEdTxtId)).setText("3");
-
-            ((TextView) m_WebRtcNsStngLyotViewPt.findViewById(R.id.WebRtcNsPolicyModeEdTxtId)).setText("3");
-
-            ((CheckBox) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsIsUseVadCkBoxId)).setChecked(true);
-            ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsVadProbStartEdTxtId)).setText("95");
-            ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsVadProbCntuEdTxtId)).setText("95");
-            ((CheckBox) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsIsUseAgcCkBoxId)).setChecked(true);
-            ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsAgcLevelEdTxtId)).setText("20000");
-            ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsAgcIncrementEdTxtId)).setText("10");
-            ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsAgcDecrementEdTxtId)).setText("-200");
-            ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsAgcMaxGainEdTxtId)).setText("20");
-
-            ((RadioButton) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexEncdUseCbrRdBtnId)).setChecked(true);
-            ((TextView) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexEncdCmplxtEdTxtId)).setText("4");
-            ((CheckBox) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexDecdIsUsePrcplEnhsmtCkBoxId)).setChecked(true);
-
-            ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdVdoTypeEdTxtId)).setText("0");
-            ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdBitrateCtrlModeEdTxtId)).setText("3");
-            ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdIDRFrmIntvlEdTxtId)).setText("15");
-            ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdCmplxtEdTxtId)).setText("0");
-
-            ((TextView) m_SystemH264CodecStngLyotViewPt.findViewById(R.id.SystemH264EncdBitrateCtrlModeEdTxtId)).setText("1");
-            ((TextView) m_SystemH264CodecStngLyotViewPt.findViewById(R.id.SystemH264EncdIDRFrmIntvlEdTxtId)).setText("1");
-            ((TextView) m_SystemH264CodecStngLyotViewPt.findViewById(R.id.SystemH264EncdCmplxtEdTxtId)).setText("1");
-        }
-
-        //效果等级：高。
-        public void OnClickUseEffectHighRdBtn (View ViewPt){
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseEffectHighRdBtnId)).setChecked(true);
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseAdoSmplRate16000RdBtnId)).setChecked(true);
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseAdoFrmLen20msRdBtnId)).setChecked(true);
-            ((CheckBox) m_StngLyotViewPt.findViewById(R.id.IsUseSystemAecNsAgcCkBoxId)).setChecked(true);
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseSpeexWebRtcAecRdBtnId)).setChecked(true);
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseWebRtcNsRdBtnId)).setChecked(true);
-            ((CheckBox) m_StngLyotViewPt.findViewById(R.id.IsUseSpeexPrpocsCkBoxId)).setChecked(true);
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseSpeexCodecRdBtnId)).setChecked(true);
-            ((CheckBox) m_StngLyotViewPt.findViewById(R.id.IsSaveAdoToWaveFileCkBoxId)).setChecked(true);
-            ((CheckBox) m_StngLyotViewPt.findViewById(R.id.IsDrawAdoWavfmToSurfaceCkBoxId)).setChecked(false);
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseVdoSmplRate15RdBtnId)).setChecked(true);
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseVdoFrmSzPrsetRdBtnId)).setChecked(true);
-            ((Spinner) m_StngLyotViewPt.findViewById(R.id.VdoFrmSzPrsetSpinnerId)).setSelection(2);
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseOpenH264CodecRdBtnId)).setChecked(true);
-
-            ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecFilterLenMsecEdTxtId)).setText("500");
-            ((CheckBox) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecIsUseRecCkBoxId)).setChecked(true);
-            ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecEchoMutpEdTxtId)).setText("3.0");
-            ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecEchoCntuEdTxtId)).setText("0.65");
-            ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecEchoSupesEdTxtId)).setText("-32768");
-            ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecEchoSupesActEdTxtId)).setText("-32768");
-            ((CheckBox) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecIsSaveMemFileCkBoxId)).setChecked(false);
-
-            ((CheckBox) m_WebRtcAecmStngLyotViewPt.findViewById(R.id.WebRtcAecmIsUseCNGModeCkBoxId)).setChecked(false);
-            ((TextView) m_WebRtcAecmStngLyotViewPt.findViewById(R.id.WebRtcAecmEchoModeEdTxtId)).setText("4");
-            ((TextView) m_WebRtcAecmStngLyotViewPt.findViewById(R.id.WebRtcAecmDelayEdTxtId)).setText("0");
-
-            ((TextView) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecEchoModeEdTxtId)).setText("2");
-            ((TextView) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecDelayEdTxtId)).setText("0");
-            ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsUseDelayAgstcModeCkBoxId)).setChecked(true);
-            ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsUseExtdFilterModeCkBoxId)).setChecked(true);
-            ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsUseRefinedFilterAdaptAecModeCkBoxId)).setChecked(false);
-            ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsUseAdaptAdjDelayCkBoxId)).setChecked(true);
-            ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsSaveMemFileCkBoxId)).setChecked(false);
-
-            ((RadioButton) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWorkModeSpeexAecWebRtcAecmWebRtcAecRdBtnId)).setChecked(true);
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecFilterLenMsecEdTxtId)).setText("500");
-            ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecIsUseRecCkBoxId)).setChecked(true);
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecEchoMutpEdTxtId)).setText("1.0");
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecEchoCntuEdTxtId)).setText("0.6");
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecEchoSupesEdTxtId)).setText("-32768");
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecEchoSupesActEdTxtId)).setText("-32768");
-            ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecmIsUseCNGModeCkBoxId)).setChecked(false);
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecmEchoModeEdTxtId)).setText("4");
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecmDelayEdTxtId)).setText("0");
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecEchoModeEdTxtId)).setText("2");
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecDelayEdTxtId)).setText("0");
-            ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecIsUseDelayAgstcModeCkBoxId)).setChecked(true);
-            ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecIsUseExtdFilterModeCkBoxId)).setChecked(true);
-            ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecIsUseRefinedFilterAdaptAecModeCkBoxId)).setChecked(false);
-            ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecIsUseAdaptAdjDelayCkBoxId)).setChecked(true);
-            ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecIsUseSameRoomAecCkBoxId)).setChecked(false);
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSameRoomEchoMinDelayEdTxtId)).setText("380");
-
-            ((CheckBox) m_SpeexPrpocsNsStngLyotViewPt.findViewById(R.id.SpeexPrpocsIsUseNsCkBoxId)).setChecked(true);
-            ((TextView) m_SpeexPrpocsNsStngLyotViewPt.findViewById(R.id.SpeexPrpocsNoiseSupesEdTxtId)).setText("-32768");
-            ((CheckBox) m_SpeexPrpocsNsStngLyotViewPt.findViewById(R.id.SpeexPrpocsIsUseDereverbCkBoxId)).setChecked(true);
-
-            ((TextView) m_WebRtcNsxStngLyotViewPt.findViewById(R.id.WebRtcNsxPolicyModeEdTxtId)).setText("3");
-
-            ((TextView) m_WebRtcNsStngLyotViewPt.findViewById(R.id.WebRtcNsPolicyModeEdTxtId)).setText("3");
-
-            ((CheckBox) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsIsUseVadCkBoxId)).setChecked(true);
-            ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsVadProbStartEdTxtId)).setText("95");
-            ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsVadProbCntuEdTxtId)).setText("95");
-            ((CheckBox) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsIsUseAgcCkBoxId)).setChecked(true);
-            ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsAgcLevelEdTxtId)).setText("20000");
-            ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsAgcIncrementEdTxtId)).setText("10");
-            ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsAgcDecrementEdTxtId)).setText("-200");
-            ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsAgcMaxGainEdTxtId)).setText("20");
-
-            ((RadioButton) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexEncdUseVbrRdBtnId)).setChecked(true);
-            ((TextView) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexEncdCmplxtEdTxtId)).setText("8");
-            ((CheckBox) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexDecdIsUsePrcplEnhsmtCkBoxId)).setChecked(true);
-
-            ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdVdoTypeEdTxtId)).setText("0");
-            ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdBitrateCtrlModeEdTxtId)).setText("3");
-            ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdIDRFrmIntvlEdTxtId)).setText("15");
-            ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdCmplxtEdTxtId)).setText("0");
-
-            ((TextView) m_SystemH264CodecStngLyotViewPt.findViewById(R.id.SystemH264EncdBitrateCtrlModeEdTxtId)).setText("1");
-            ((TextView) m_SystemH264CodecStngLyotViewPt.findViewById(R.id.SystemH264EncdIDRFrmIntvlEdTxtId)).setText("1");
-            ((TextView) m_SystemH264CodecStngLyotViewPt.findViewById(R.id.SystemH264EncdCmplxtEdTxtId)).setText("2");
-        }
-
-        //效果等级：超。
-        public void OnClickUseEffectSuperRdBtn (View ViewPt){
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseEffectSuperRdBtnId)).setChecked(true);
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseAdoSmplRate16000RdBtnId)).setChecked(true);
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseAdoFrmLen20msRdBtnId)).setChecked(true);
-            ((CheckBox) m_StngLyotViewPt.findViewById(R.id.IsUseSystemAecNsAgcCkBoxId)).setChecked(true);
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseSpeexWebRtcAecRdBtnId)).setChecked(true);
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseRNNoiseRdBtnId)).setChecked(true);
-            ((CheckBox) m_StngLyotViewPt.findViewById(R.id.IsUseSpeexPrpocsCkBoxId)).setChecked(true);
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseSpeexCodecRdBtnId)).setChecked(true);
-            ((CheckBox) m_StngLyotViewPt.findViewById(R.id.IsSaveAdoToWaveFileCkBoxId)).setChecked(true);
-            ((CheckBox) m_StngLyotViewPt.findViewById(R.id.IsDrawAdoWavfmToSurfaceCkBoxId)).setChecked(false);
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseVdoSmplRate24RdBtnId)).setChecked(true);
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseVdoFrmSzPrsetRdBtnId)).setChecked(true);
-            ((Spinner) m_StngLyotViewPt.findViewById(R.id.VdoFrmSzPrsetSpinnerId)).setSelection(2);
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseOpenH264CodecRdBtnId)).setChecked(true);
-
-            ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecFilterLenMsecEdTxtId)).setText("500");
-            ((CheckBox) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecIsUseRecCkBoxId)).setChecked(true);
-            ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecEchoMutpEdTxtId)).setText("3.0");
-            ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecEchoCntuEdTxtId)).setText("0.65");
-            ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecEchoSupesEdTxtId)).setText("-32768");
-            ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecEchoSupesActEdTxtId)).setText("-32768");
-            ((CheckBox) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecIsSaveMemFileCkBoxId)).setChecked(false);
-
-            ((CheckBox) m_WebRtcAecmStngLyotViewPt.findViewById(R.id.WebRtcAecmIsUseCNGModeCkBoxId)).setChecked(false);
-            ((TextView) m_WebRtcAecmStngLyotViewPt.findViewById(R.id.WebRtcAecmEchoModeEdTxtId)).setText("4");
-            ((TextView) m_WebRtcAecmStngLyotViewPt.findViewById(R.id.WebRtcAecmDelayEdTxtId)).setText("0");
-
-            ((TextView) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecEchoModeEdTxtId)).setText("2");
-            ((TextView) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecDelayEdTxtId)).setText("0");
-            ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsUseDelayAgstcModeCkBoxId)).setChecked(true);
-            ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsUseExtdFilterModeCkBoxId)).setChecked(true);
-            ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsUseRefinedFilterAdaptAecModeCkBoxId)).setChecked(false);
-            ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsUseAdaptAdjDelayCkBoxId)).setChecked(true);
-            ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsSaveMemFileCkBoxId)).setChecked(false);
-
-            ((RadioButton) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWorkModeSpeexAecWebRtcAecmWebRtcAecRdBtnId)).setChecked(true);
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecFilterLenMsecEdTxtId)).setText("500");
-            ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecIsUseRecCkBoxId)).setChecked(true);
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecEchoMutpEdTxtId)).setText("1.0");
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecEchoCntuEdTxtId)).setText("0.6");
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecEchoSupesEdTxtId)).setText("-32768");
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecEchoSupesActEdTxtId)).setText("-32768");
-            ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecmIsUseCNGModeCkBoxId)).setChecked(false);
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecmEchoModeEdTxtId)).setText("4");
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecmDelayEdTxtId)).setText("0");
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecEchoModeEdTxtId)).setText("2");
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecDelayEdTxtId)).setText("0");
-            ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecIsUseDelayAgstcModeCkBoxId)).setChecked(true);
-            ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecIsUseExtdFilterModeCkBoxId)).setChecked(true);
-            ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecIsUseRefinedFilterAdaptAecModeCkBoxId)).setChecked(false);
-            ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecIsUseAdaptAdjDelayCkBoxId)).setChecked(true);
-            ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecIsUseSameRoomAecCkBoxId)).setChecked(true);
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSameRoomEchoMinDelayEdTxtId)).setText("380");
-
-            ((CheckBox) m_SpeexPrpocsNsStngLyotViewPt.findViewById(R.id.SpeexPrpocsIsUseNsCkBoxId)).setChecked(true);
-            ((TextView) m_SpeexPrpocsNsStngLyotViewPt.findViewById(R.id.SpeexPrpocsNoiseSupesEdTxtId)).setText("-32768");
-            ((CheckBox) m_SpeexPrpocsNsStngLyotViewPt.findViewById(R.id.SpeexPrpocsIsUseDereverbCkBoxId)).setChecked(true);
-
-            ((TextView) m_WebRtcNsxStngLyotViewPt.findViewById(R.id.WebRtcNsxPolicyModeEdTxtId)).setText("3");
-
-            ((TextView) m_WebRtcNsStngLyotViewPt.findViewById(R.id.WebRtcNsPolicyModeEdTxtId)).setText("3");
-
-            ((CheckBox) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsIsUseVadCkBoxId)).setChecked(true);
-            ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsVadProbStartEdTxtId)).setText("95");
-            ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsVadProbCntuEdTxtId)).setText("95");
-            ((CheckBox) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsIsUseAgcCkBoxId)).setChecked(true);
-            ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsAgcLevelEdTxtId)).setText("20000");
-            ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsAgcIncrementEdTxtId)).setText("10");
-            ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsAgcDecrementEdTxtId)).setText("-200");
-            ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsAgcMaxGainEdTxtId)).setText("20");
-
-            ((RadioButton) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexEncdUseVbrRdBtnId)).setChecked(true);
-            ((TextView) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexEncdCmplxtEdTxtId)).setText("10");
-            ((CheckBox) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexDecdIsUsePrcplEnhsmtCkBoxId)).setChecked(true);
-
-            ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdVdoTypeEdTxtId)).setText("0");
-            ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdBitrateCtrlModeEdTxtId)).setText("3");
-            ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdIDRFrmIntvlEdTxtId)).setText("24");
-            ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdCmplxtEdTxtId)).setText("1");
-
-            ((TextView) m_SystemH264CodecStngLyotViewPt.findViewById(R.id.SystemH264EncdBitrateCtrlModeEdTxtId)).setText("1");
-            ((TextView) m_SystemH264CodecStngLyotViewPt.findViewById(R.id.SystemH264EncdIDRFrmIntvlEdTxtId)).setText("1");
-            ((TextView) m_SystemH264CodecStngLyotViewPt.findViewById(R.id.SystemH264EncdCmplxtEdTxtId)).setText("2");
-        }
-
-        //效果等级：特。
-        public void OnClickUseEffectPremiumRdBtn (View ViewPt){
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseEffectPremiumRdBtnId)).setChecked(true);
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseAdoSmplRate32000RdBtnId)).setChecked(true);
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseAdoFrmLen20msRdBtnId)).setChecked(true);
-            ((CheckBox) m_StngLyotViewPt.findViewById(R.id.IsUseSystemAecNsAgcCkBoxId)).setChecked(true);
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseSpeexWebRtcAecRdBtnId)).setChecked(true);
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseRNNoiseRdBtnId)).setChecked(true);
-            ((CheckBox) m_StngLyotViewPt.findViewById(R.id.IsUseSpeexPrpocsCkBoxId)).setChecked(true);
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseSpeexCodecRdBtnId)).setChecked(true);
-            ((CheckBox) m_StngLyotViewPt.findViewById(R.id.IsSaveAdoToWaveFileCkBoxId)).setChecked(true);
-            ((CheckBox) m_StngLyotViewPt.findViewById(R.id.IsDrawAdoWavfmToSurfaceCkBoxId)).setChecked(false);
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseVdoSmplRate30RdBtnId)).setChecked(true);
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseVdoFrmSzPrsetRdBtnId)).setChecked(true);
-            ((Spinner) m_StngLyotViewPt.findViewById(R.id.VdoFrmSzPrsetSpinnerId)).setSelection(3);
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseOpenH264CodecRdBtnId)).setChecked(true);
-
-            ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecFilterLenMsecEdTxtId)).setText("500");
-            ((CheckBox) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecIsUseRecCkBoxId)).setChecked(true);
-            ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecEchoMutpEdTxtId)).setText("3.0");
-            ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecEchoCntuEdTxtId)).setText("0.65");
-            ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecEchoSupesEdTxtId)).setText("-32768");
-            ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecEchoSupesActEdTxtId)).setText("-32768");
-            ((CheckBox) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecIsSaveMemFileCkBoxId)).setChecked(false);
-
-            ((CheckBox) m_WebRtcAecmStngLyotViewPt.findViewById(R.id.WebRtcAecmIsUseCNGModeCkBoxId)).setChecked(false);
-            ((TextView) m_WebRtcAecmStngLyotViewPt.findViewById(R.id.WebRtcAecmEchoModeEdTxtId)).setText("4");
-            ((TextView) m_WebRtcAecmStngLyotViewPt.findViewById(R.id.WebRtcAecmDelayEdTxtId)).setText("0");
-
-            ((TextView) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecEchoModeEdTxtId)).setText("2");
-            ((TextView) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecDelayEdTxtId)).setText("0");
-            ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsUseDelayAgstcModeCkBoxId)).setChecked(true);
-            ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsUseExtdFilterModeCkBoxId)).setChecked(true);
-            ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsUseRefinedFilterAdaptAecModeCkBoxId)).setChecked(false);
-            ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsUseAdaptAdjDelayCkBoxId)).setChecked(true);
-            ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsSaveMemFileCkBoxId)).setChecked(false);
-
-            ((RadioButton) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWorkModeSpeexAecWebRtcAecmWebRtcAecRdBtnId)).setChecked(true);
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecFilterLenMsecEdTxtId)).setText("500");
-            ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecIsUseRecCkBoxId)).setChecked(true);
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecEchoMutpEdTxtId)).setText("1.0");
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecEchoCntuEdTxtId)).setText("0.6");
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecEchoSupesEdTxtId)).setText("-32768");
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecEchoSupesActEdTxtId)).setText("-32768");
-            ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecmIsUseCNGModeCkBoxId)).setChecked(false);
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecmEchoModeEdTxtId)).setText("4");
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecmDelayEdTxtId)).setText("0");
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecEchoModeEdTxtId)).setText("2");
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecDelayEdTxtId)).setText("0");
-            ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecIsUseDelayAgstcModeCkBoxId)).setChecked(true);
-            ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecIsUseExtdFilterModeCkBoxId)).setChecked(true);
-            ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecIsUseRefinedFilterAdaptAecModeCkBoxId)).setChecked(false);
-            ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecIsUseAdaptAdjDelayCkBoxId)).setChecked(true);
-            ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecIsUseSameRoomAecCkBoxId)).setChecked(true);
-            ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSameRoomEchoMinDelayEdTxtId)).setText("380");
-
-            ((CheckBox) m_SpeexPrpocsNsStngLyotViewPt.findViewById(R.id.SpeexPrpocsIsUseNsCkBoxId)).setChecked(true);
-            ((TextView) m_SpeexPrpocsNsStngLyotViewPt.findViewById(R.id.SpeexPrpocsNoiseSupesEdTxtId)).setText("-32768");
-            ((CheckBox) m_SpeexPrpocsNsStngLyotViewPt.findViewById(R.id.SpeexPrpocsIsUseDereverbCkBoxId)).setChecked(true);
-
-            ((TextView) m_WebRtcNsxStngLyotViewPt.findViewById(R.id.WebRtcNsxPolicyModeEdTxtId)).setText("3");
-
-            ((TextView) m_WebRtcNsStngLyotViewPt.findViewById(R.id.WebRtcNsPolicyModeEdTxtId)).setText("3");
-
-            ((CheckBox) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsIsUseVadCkBoxId)).setChecked(true);
-            ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsVadProbStartEdTxtId)).setText("95");
-            ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsVadProbCntuEdTxtId)).setText("95");
-            ((CheckBox) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsIsUseAgcCkBoxId)).setChecked(true);
-            ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsAgcLevelEdTxtId)).setText("20000");
-            ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsAgcIncrementEdTxtId)).setText("10");
-            ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsAgcDecrementEdTxtId)).setText("-200");
-            ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsAgcMaxGainEdTxtId)).setText("20");
-
-            ((RadioButton) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexEncdUseVbrRdBtnId)).setChecked(true);
-            ((TextView) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexEncdCmplxtEdTxtId)).setText("10");
-            ((CheckBox) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexDecdIsUsePrcplEnhsmtCkBoxId)).setChecked(true);
-
-            ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdVdoTypeEdTxtId)).setText("0");
-            ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdBitrateCtrlModeEdTxtId)).setText("3");
-            ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdIDRFrmIntvlEdTxtId)).setText("30");
-            ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdCmplxtEdTxtId)).setText("2");
-
-            ((TextView) m_SystemH264CodecStngLyotViewPt.findViewById(R.id.SystemH264EncdBitrateCtrlModeEdTxtId)).setText("1");
-            ((TextView) m_SystemH264CodecStngLyotViewPt.findViewById(R.id.SystemH264EncdIDRFrmIntvlEdTxtId)).setText("1");
-            ((TextView) m_SystemH264CodecStngLyotViewPt.findViewById(R.id.SystemH264EncdCmplxtEdTxtId)).setText("2");
-        }
-
-        //比特率等级：低。
-        public void OnClickUseBitrateLowRdBtn (View ViewPt){
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseBitrateLowRdBtnId)).setChecked(true);
-
-            ((TextView) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexEncdQualtEdTxtId)).setText("1");
-            ((TextView) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexEncdPlcExptLossRateEdTxtId)).setText("1");
-
-            ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdEncdBitrateEdTxtId)).setText("10");
-
-            ((TextView) m_SystemH264CodecStngLyotViewPt.findViewById(R.id.SystemH264EncdEncdBitrateEdTxtId)).setText("10");
-        }
-
-        //比特率等级：中。
-        public void OnClickUseBitrateMidRdBtn (View ViewPt){
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseBitrateMidRdBtnId)).setChecked(true);
-
-            ((TextView) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexEncdQualtEdTxtId)).setText("4");
-            ((TextView) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexEncdPlcExptLossRateEdTxtId)).setText("40");
-
-            ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdEncdBitrateEdTxtId)).setText("20");
-
-            ((TextView) m_SystemH264CodecStngLyotViewPt.findViewById(R.id.SystemH264EncdEncdBitrateEdTxtId)).setText("20");
-        }
-
-        //比特率等级：高。
-        public void OnClickUseBitrateHighRdBtn (View ViewPt){
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseBitrateHighRdBtnId)).setChecked(true);
-
-            ((TextView) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexEncdQualtEdTxtId)).setText("8");
-            ((TextView) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexEncdPlcExptLossRateEdTxtId)).setText("80");
-
-            ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdEncdBitrateEdTxtId)).setText("40");
-
-            ((TextView) m_SystemH264CodecStngLyotViewPt.findViewById(R.id.SystemH264EncdEncdBitrateEdTxtId)).setText("40");
-        }
-
-        //比特率等级：超。
-        public void OnClickUseBitrateSuperRdBtn (View ViewPt){
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseBitrateSuperRdBtnId)).setChecked(true);
-
-            ((TextView) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexEncdQualtEdTxtId)).setText("10");
-            ((TextView) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexEncdPlcExptLossRateEdTxtId)).setText("100");
-
-            ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdEncdBitrateEdTxtId)).setText("60");
-
-            ((TextView) m_SystemH264CodecStngLyotViewPt.findViewById(R.id.SystemH264EncdEncdBitrateEdTxtId)).setText("60");
-        }
-
-        //比特率等级：特。
-        public void OnClickUseBitratePremiumRdBtn (View ViewPt){
-            ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseBitratePremiumRdBtnId)).setChecked(true);
-
-            ((TextView) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexEncdQualtEdTxtId)).setText("10");
-            ((TextView) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexEncdPlcExptLossRateEdTxtId)).setText("100");
-
-            ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdEncdBitrateEdTxtId)).setText("80");
-
-            ((TextView) m_SystemH264CodecStngLyotViewPt.findViewById(R.id.SystemH264EncdEncdBitrateEdTxtId)).setText("80");
-        }
-
-        //Speex声学回音消除器设置按钮。
-        public void OnClickSpeexAecStngBtn (View ViewPt){
-            setContentView(m_SpeexAecStngLyotViewPt);
-            m_CurActivityLyotViewPt = m_SpeexAecStngLyotViewPt;
-        }
-
-        //WebRtc定点版声学回音消除器设置按钮。
-        public void OnClickWebRtcAecmStngBtn (View ViewPt){
-            setContentView(m_WebRtcAecmStngLyotViewPt);
-            m_CurActivityLyotViewPt = m_WebRtcAecmStngLyotViewPt;
-        }
-
-        //WebRtc浮点版声学回音消除器设置按钮。
-        public void OnClickWebRtcAecStngBtn (View ViewPt){
-            setContentView(m_WebRtcAecStngLyotViewPt);
-            m_CurActivityLyotViewPt = m_WebRtcAecStngLyotViewPt;
-        }
-
-        //SpeexWebRtc三重声学回音消除器设置按钮。
-        public void OnClickSpeexWebRtcAecStngBtn (View ViewPt){
-            setContentView(m_SpeexWebRtcAecStngLyotViewPt);
-            m_CurActivityLyotViewPt = m_SpeexWebRtcAecStngLyotViewPt;
-        }
-
-        //Speex预处理器的噪音抑制设置按钮。
-        public void OnClickSpeexPrpocsNsStngBtn (View ViewPt){
-            setContentView(m_SpeexPrpocsNsStngLyotViewPt);
-            m_CurActivityLyotViewPt = m_SpeexPrpocsNsStngLyotViewPt;
-        }
-
-        //WebRtc定点版噪音抑制器设置按钮。
-        public void OnClickWebRtcNsxStngBtn (View ViewPt){
-            setContentView(m_WebRtcNsxStngLyotViewPt);
-            m_CurActivityLyotViewPt = m_WebRtcNsxStngLyotViewPt;
-        }
-
-        //WebRtc浮点版噪音抑制器设置按钮。
-        public void OnClickWebRtcNsStngBtn (View ViewPt){
-            setContentView(m_WebRtcNsStngLyotViewPt);
-            m_CurActivityLyotViewPt = m_WebRtcNsStngLyotViewPt;
-        }
-
-        //Speex预处理器设置按钮。
-        public void OnClickSpeexPrpocsStngBtn (View ViewPt){
-            setContentView(m_SpeexPrpocsStngLyotViewPt);
-            m_CurActivityLyotViewPt = m_SpeexPrpocsStngLyotViewPt;
-        }
-
-        //Speex编解码器设置按钮。
-        public void OnClickSpeexCodecStngBtn (View ViewPt){
-            setContentView(m_SpeexCodecStngLyotViewPt);
-            m_CurActivityLyotViewPt = m_SpeexCodecStngLyotViewPt;
-        }
-
-        //Opus编解码器设置按钮。
-        public void OnClickOpusCodecStngBtn (View ViewPt){
-
-        }
-
-        //OpenH264编解码器设置按钮。
-        public void OnClickOpenH264CodecStngBtn (View ViewPt){
-            setContentView(m_OpenH264CodecStngLyotViewPt);
-            m_CurActivityLyotViewPt = m_OpenH264CodecStngLyotViewPt;
-        }
-
-        //系统自带H264编解码器设置按钮。
-        public void OnClickSystemH264CodecStngBtn (View ViewPt){
-            setContentView(m_SystemH264CodecStngLyotViewPt);
-            m_CurActivityLyotViewPt = m_SystemH264CodecStngLyotViewPt;
-        }
-
-        //传输协议设置确定按钮。
-        public void OnClickXfrPrtclStngOkBtn (View ViewPt){
-            setContentView(m_MainLyotViewPt);
-            m_CurActivityLyotViewPt = m_MainLyotViewPt;
-        }
-
-        //设置布局的确定按钮。
-        public void OnClickStngOkBtn (View ViewPt){
-            setContentView(m_MainLyotViewPt);
-            m_CurActivityLyotViewPt = m_MainLyotViewPt;
-        }
-
-        //音频自适应抖动缓冲器设置布局的确定按钮。
-        public void OnClickAjbStngOkBtn (View ViewPt){
-            setContentView(m_StngLyotViewPt);
-            m_CurActivityLyotViewPt = m_StngLyotViewPt;
-        }
-
-        //Speex声学回音消除器设置布局的删除内存块文件按钮。
-        public void OnClickSpeexAecDelMemFileBtn (View ViewPt){
-            String p_SpeexAecMemFileFullPathStrPt = m_ExternalDirFullAbsPathStrPt + "/SpeexAecMem";
-            File file = new File(p_SpeexAecMemFileFullPathStrPt);
-            if (file.exists()) {
-                if (file.delete()) {
-                    Toast.makeText(this, "删除Speex声学回音消除器的内存块文件 " + p_SpeexAecMemFileFullPathStrPt + " 成功。", Toast.LENGTH_LONG).show();
-                } else {
-                    Toast.makeText(this, "删除Speex声学回音消除器的内存块文件 " + p_SpeexAecMemFileFullPathStrPt + " 失败。", Toast.LENGTH_LONG).show();
-                }
-            } else {
-                Toast.makeText(this, "Speex声学回音消除器的内存块文件 " + p_SpeexAecMemFileFullPathStrPt + " 不存在。", Toast.LENGTH_LONG).show();
-            }
-        }
-
-        //Speex声学回音消除器设置布局的确定按钮。
-        public void OnClickSpeexAecStngOkBtn (View ViewPt){
-            setContentView(m_StngLyotViewPt);
-            m_CurActivityLyotViewPt = m_StngLyotViewPt;
-        }
-
-        //WebRtc定点版声学回音消除器设置布局的确定按钮。
-        public void OnClickWebRtcAecmStngOkBtn (View ViewPt){
-            setContentView(m_StngLyotViewPt);
-            m_CurActivityLyotViewPt = m_StngLyotViewPt;
-        }
-
-        //WebRtc浮点版声学回音消除器设置布局的删除内存块文件按钮。
-        public void OnClickWebRtcAecDelMemFileBtn (View ViewPt){
-            String p_WebRtcAecMemFileFullPathStrPt = m_ExternalDirFullAbsPathStrPt + "/WebRtcAecMem";
-            File file = new File(p_WebRtcAecMemFileFullPathStrPt);
-            if (file.exists()) {
-                if (file.delete()) {
-                    Toast.makeText(this, "删除WebRtc浮点版声学回音消除器的内存块文件 " + p_WebRtcAecMemFileFullPathStrPt + " 成功。", Toast.LENGTH_LONG).show();
-                } else {
-                    Toast.makeText(this, "删除WebRtc浮点版声学回音消除器的内存块文件 " + p_WebRtcAecMemFileFullPathStrPt + " 失败。", Toast.LENGTH_LONG).show();
-                }
-            } else {
-                Toast.makeText(this, "WebRtc浮点版声学回音消除器的内存块文件 " + p_WebRtcAecMemFileFullPathStrPt + " 不存在。", Toast.LENGTH_LONG).show();
-            }
-        }
-
-        //WebRtc浮点版声学回音消除器设置布局的确定按钮。
-        public void OnClickWebRtcAecStngOkBtn (View ViewPt){
-            setContentView(m_StngLyotViewPt);
-            m_CurActivityLyotViewPt = m_StngLyotViewPt;
-        }
-
-        //SpeexWebRtc三重声学回音消除器设置布局的确定按钮。
-        public void OnClickSpeexWebRtcAecStngOkBtn (View ViewPt){
-            setContentView(m_StngLyotViewPt);
-            m_CurActivityLyotViewPt = m_StngLyotViewPt;
-        }
-
-        //Speex预处理器的噪音抑制设置布局的确定按钮。
-        public void OnClickSpeexPrpocsNsStngOkBtn (View ViewPt){
-            setContentView(m_StngLyotViewPt);
-            m_CurActivityLyotViewPt = m_StngLyotViewPt;
-        }
-
-        //WebRtc定点版噪音抑制器设置布局的确定按钮。
-        public void OnClickWebRtcNsxStngOkBtn (View ViewPt){
-            setContentView(m_StngLyotViewPt);
-            m_CurActivityLyotViewPt = m_StngLyotViewPt;
-        }
-
-        //WebRtc浮点版噪音抑制器设置布局的确定按钮。
-        public void OnClickWebRtcNsStngOkBtn (View ViewPt){
-            setContentView(m_StngLyotViewPt);
-            m_CurActivityLyotViewPt = m_StngLyotViewPt;
-        }
-
-        //Speex预处理器的其他功能设置布局的确定按钮。
-        public void OnClickSpeexPrpocsStngOkBtn (View ViewPt){
-            setContentView(m_StngLyotViewPt);
-            m_CurActivityLyotViewPt = m_StngLyotViewPt;
-        }
-
-        //Speex编解码器设置布局的确定按钮。
-        public void OnClickSpeexCodecStngOkBtn (View ViewPt){
-            setContentView(m_StngLyotViewPt);
-            m_CurActivityLyotViewPt = m_StngLyotViewPt;
-        }
-
-        //Opus编解码器设置布局的确定按钮。
-        public void OnOpusCodecSettingOkClick (View ViewPt){
-            setContentView(m_StngLyotViewPt);
-            m_CurActivityLyotViewPt = m_StngLyotViewPt;
-        }
-
-        //OpenH264编解码器设置布局的确定按钮。
-        public void OnClickOpenH264CodecStngOkBtn (View ViewPt){
-            setContentView(m_StngLyotViewPt);
-            m_CurActivityLyotViewPt = m_StngLyotViewPt;
-        }
-
-        //系统自带H264编解码器设置布局的确定按钮。
-        public void OnClickSystemH264CodecStngOkBtn (View ViewPt){
-            setContentView(m_StngLyotViewPt);
-            m_CurActivityLyotViewPt = m_StngLyotViewPt;
+        if (p_Rslt != 0) //如果启动媒体处理线程失败。
+        {
+            m_MyMediaPocsThrdPt = null;
         }
     }
+
+    //视频输入预览或视频输出显示Surface。
+    public void onClickVdoInptPrvwAndVdoOtptDspySurface(View ViewPt) {
+        if (((LinearLayout) ViewPt.getParent().getParent()).getOrientation() == LinearLayout.HORIZONTAL) {
+            ((LinearLayout) ViewPt.getParent().getParent()).setOrientation(LinearLayout.VERTICAL);
+        } else {
+            ((LinearLayout) ViewPt.getParent().getParent()).setOrientation(LinearLayout.HORIZONTAL);
+        }
+    }
+
+    //清空日志按钮。
+    public void OnClickClearLogBtn(View ViewPt) {
+        ((LinearLayout) m_MainLyotViewPt.findViewById(R.id.LogLinearLyotId)).removeAllViews();
+    }
+
+
+    //效果等级：低。
+    public void OnClickUseEffectLowRdBtn(View ViewPt) {
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseEffectLowRdBtnId)).setChecked(true);
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseAdoSmplRate8000RdBtnId)).setChecked(true);
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseAdoFrmLen20msRdBtnId)).setChecked(true);
+        ((CheckBox) m_StngLyotViewPt.findViewById(R.id.IsUseSystemAecNsAgcCkBoxId)).setChecked(true);
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseWebRtcAecmRdBtnId)).setChecked(true);
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseSpeexPrpocsNsRdBtnId)).setChecked(true);
+        ((CheckBox) m_StngLyotViewPt.findViewById(R.id.IsUseSpeexPrpocsCkBoxId)).setChecked(true);
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseSpeexCodecRdBtnId)).setChecked(true);
+        ((CheckBox) m_StngLyotViewPt.findViewById(R.id.IsSaveAdoToWaveFileCkBoxId)).setChecked(true);
+        ((CheckBox) m_StngLyotViewPt.findViewById(R.id.IsDrawAdoWavfmToSurfaceCkBoxId)).setChecked(false);
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseVdoSmplRate12RdBtnId)).setChecked(true);
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseVdoFrmSzPrsetRdBtnId)).setChecked(true);
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseVdoFrmSzPrsetRdBtnId)).setChecked(true);
+        ((Spinner) m_StngLyotViewPt.findViewById(R.id.VdoFrmSzPrsetSpinnerId)).setSelection(0);
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseOpenH264CodecRdBtnId)).setChecked(true);
+
+        ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecFilterLenMsecEdTxtId)).setText("500");
+        ((CheckBox) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecIsUseRecCkBoxId)).setChecked(true);
+        ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecEchoMutpEdTxtId)).setText("3.0");
+        ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecEchoCntuEdTxtId)).setText("0.65");
+        ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecEchoSupesEdTxtId)).setText("-32768");
+        ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecEchoSupesActEdTxtId)).setText("-32768");
+        ((CheckBox) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecIsSaveMemFileCkBoxId)).setChecked(false);
+
+        ((CheckBox) m_WebRtcAecmStngLyotViewPt.findViewById(R.id.WebRtcAecmIsUseCNGModeCkBoxId)).setChecked(false);
+        ((TextView) m_WebRtcAecmStngLyotViewPt.findViewById(R.id.WebRtcAecmEchoModeEdTxtId)).setText("4");
+        ((TextView) m_WebRtcAecmStngLyotViewPt.findViewById(R.id.WebRtcAecmDelayEdTxtId)).setText("0");
+
+        ((TextView) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecEchoModeEdTxtId)).setText("2");
+        ((TextView) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecDelayEdTxtId)).setText("0");
+        ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsUseDelayAgstcModeCkBoxId)).setChecked(true);
+        ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsUseExtdFilterModeCkBoxId)).setChecked(true);
+        ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsUseRefinedFilterAdaptAecModeCkBoxId)).setChecked(false);
+        ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsUseAdaptAdjDelayCkBoxId)).setChecked(true);
+        ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsSaveMemFileCkBoxId)).setChecked(false);
+
+        ((RadioButton) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWorkModeSpeexAecWebRtcAecmRdBtnId)).setChecked(true);
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecFilterLenMsecEdTxtId)).setText("500");
+        ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecIsUseRecCkBoxId)).setChecked(true);
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecEchoMutpEdTxtId)).setText("1.0");
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecEchoCntuEdTxtId)).setText("0.6");
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecEchoSupesEdTxtId)).setText("-32768");
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecEchoSupesActEdTxtId)).setText("-32768");
+        ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecmIsUseCNGModeCkBoxId)).setChecked(false);
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecmEchoModeEdTxtId)).setText("4");
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecmDelayEdTxtId)).setText("0");
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecEchoModeEdTxtId)).setText("2");
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecDelayEdTxtId)).setText("0");
+        ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecIsUseDelayAgstcModeCkBoxId)).setChecked(true);
+        ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecIsUseExtdFilterModeCkBoxId)).setChecked(true);
+        ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecIsUseRefinedFilterAdaptAecModeCkBoxId)).setChecked(false);
+        ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecIsUseAdaptAdjDelayCkBoxId)).setChecked(true);
+        ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecIsUseSameRoomAecCkBoxId)).setChecked(false);
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSameRoomEchoMinDelayEdTxtId)).setText("380");
+
+        ((CheckBox) m_SpeexPrpocsNsStngLyotViewPt.findViewById(R.id.SpeexPrpocsIsUseNsCkBoxId)).setChecked(true);
+        ((TextView) m_SpeexPrpocsNsStngLyotViewPt.findViewById(R.id.SpeexPrpocsNoiseSupesEdTxtId)).setText("-32768");
+        ((CheckBox) m_SpeexPrpocsNsStngLyotViewPt.findViewById(R.id.SpeexPrpocsIsUseDereverbCkBoxId)).setChecked(true);
+
+        ((TextView) m_WebRtcNsxStngLyotViewPt.findViewById(R.id.WebRtcNsxPolicyModeEdTxtId)).setText("3");
+
+        ((TextView) m_WebRtcNsStngLyotViewPt.findViewById(R.id.WebRtcNsPolicyModeEdTxtId)).setText("3");
+
+        ((CheckBox) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsIsUseVadCkBoxId)).setChecked(true);
+        ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsVadProbStartEdTxtId)).setText("95");
+        ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsVadProbCntuEdTxtId)).setText("95");
+        ((CheckBox) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsIsUseAgcCkBoxId)).setChecked(false);
+        ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsAgcLevelEdTxtId)).setText("20000");
+        ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsAgcIncrementEdTxtId)).setText("10");
+        ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsAgcDecrementEdTxtId)).setText("-200");
+        ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsAgcMaxGainEdTxtId)).setText("20");
+
+        ((RadioButton) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexEncdUseCbrRdBtnId)).setChecked(true);
+        ((TextView) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexEncdCmplxtEdTxtId)).setText("1");
+        ((CheckBox) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexDecdIsUsePrcplEnhsmtCkBoxId)).setChecked(true);
+
+        ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdVdoTypeEdTxtId)).setText("0");
+        ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdBitrateCtrlModeEdTxtId)).setText("3");
+        ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdIDRFrmIntvlEdTxtId)).setText("12");
+        ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdCmplxtEdTxtId)).setText("0");
+
+        ((TextView) m_SystemH264CodecStngLyotViewPt.findViewById(R.id.SystemH264EncdBitrateCtrlModeEdTxtId)).setText("1");
+        ((TextView) m_SystemH264CodecStngLyotViewPt.findViewById(R.id.SystemH264EncdIDRFrmIntvlEdTxtId)).setText("1");
+        ((TextView) m_SystemH264CodecStngLyotViewPt.findViewById(R.id.SystemH264EncdCmplxtEdTxtId)).setText("0");
+    }
+
+    //效果等级：中。
+    public void OnClickUseEffectMidRdBtn(View ViewPt) {
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseEffectMidRdBtnId)).setChecked(true);
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseAdoSmplRate16000RdBtnId)).setChecked(true);
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseAdoFrmLen20msRdBtnId)).setChecked(true);
+        ((CheckBox) m_StngLyotViewPt.findViewById(R.id.IsUseSystemAecNsAgcCkBoxId)).setChecked(true);
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseWebRtcAecRdBtnId)).setChecked(true);
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseWebRtcNsxRdBtnId)).setChecked(true);
+        ((CheckBox) m_StngLyotViewPt.findViewById(R.id.IsUseSpeexPrpocsCkBoxId)).setChecked(true);
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseSpeexCodecRdBtnId)).setChecked(true);
+        ((CheckBox) m_StngLyotViewPt.findViewById(R.id.IsSaveAdoToWaveFileCkBoxId)).setChecked(true);
+        ((CheckBox) m_StngLyotViewPt.findViewById(R.id.IsDrawAdoWavfmToSurfaceCkBoxId)).setChecked(false);
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseVdoSmplRate15RdBtnId)).setChecked(true);
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseVdoFrmSzPrsetRdBtnId)).setChecked(true);
+        ((Spinner) m_StngLyotViewPt.findViewById(R.id.VdoFrmSzPrsetSpinnerId)).setSelection(1);
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseOpenH264CodecRdBtnId)).setChecked(true);
+
+        ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecFilterLenMsecEdTxtId)).setText("500");
+        ((CheckBox) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecIsUseRecCkBoxId)).setChecked(true);
+        ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecEchoMutpEdTxtId)).setText("3.0");
+        ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecEchoCntuEdTxtId)).setText("0.65");
+        ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecEchoSupesEdTxtId)).setText("-32768");
+        ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecEchoSupesActEdTxtId)).setText("-32768");
+        ((CheckBox) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecIsSaveMemFileCkBoxId)).setChecked(false);
+
+        ((CheckBox) m_WebRtcAecmStngLyotViewPt.findViewById(R.id.WebRtcAecmIsUseCNGModeCkBoxId)).setChecked(false);
+        ((TextView) m_WebRtcAecmStngLyotViewPt.findViewById(R.id.WebRtcAecmEchoModeEdTxtId)).setText("4");
+        ((TextView) m_WebRtcAecmStngLyotViewPt.findViewById(R.id.WebRtcAecmDelayEdTxtId)).setText("0");
+
+        ((TextView) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecEchoModeEdTxtId)).setText("2");
+        ((TextView) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecDelayEdTxtId)).setText("0");
+        ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsUseDelayAgstcModeCkBoxId)).setChecked(true);
+        ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsUseExtdFilterModeCkBoxId)).setChecked(true);
+        ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsUseRefinedFilterAdaptAecModeCkBoxId)).setChecked(false);
+        ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsUseAdaptAdjDelayCkBoxId)).setChecked(true);
+        ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsSaveMemFileCkBoxId)).setChecked(false);
+
+        ((RadioButton) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWorkModeWebRtcAecmWebRtcAecRdBtnId)).setChecked(true);
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecFilterLenMsecEdTxtId)).setText("500");
+        ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecIsUseRecCkBoxId)).setChecked(true);
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecEchoMutpEdTxtId)).setText("1.0");
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecEchoCntuEdTxtId)).setText("0.6");
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecEchoSupesEdTxtId)).setText("-32768");
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecEchoSupesActEdTxtId)).setText("-32768");
+        ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecmIsUseCNGModeCkBoxId)).setChecked(false);
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecmEchoModeEdTxtId)).setText("4");
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecmDelayEdTxtId)).setText("0");
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecEchoModeEdTxtId)).setText("2");
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecDelayEdTxtId)).setText("0");
+        ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecIsUseDelayAgstcModeCkBoxId)).setChecked(true);
+        ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecIsUseExtdFilterModeCkBoxId)).setChecked(true);
+        ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecIsUseRefinedFilterAdaptAecModeCkBoxId)).setChecked(false);
+        ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecIsUseAdaptAdjDelayCkBoxId)).setChecked(true);
+        ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecIsUseSameRoomAecCkBoxId)).setChecked(false);
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSameRoomEchoMinDelayEdTxtId)).setText("380");
+
+        ((CheckBox) m_SpeexPrpocsNsStngLyotViewPt.findViewById(R.id.SpeexPrpocsIsUseNsCkBoxId)).setChecked(true);
+        ((TextView) m_SpeexPrpocsNsStngLyotViewPt.findViewById(R.id.SpeexPrpocsNoiseSupesEdTxtId)).setText("-32768");
+        ((CheckBox) m_SpeexPrpocsNsStngLyotViewPt.findViewById(R.id.SpeexPrpocsIsUseDereverbCkBoxId)).setChecked(true);
+
+        ((TextView) m_WebRtcNsxStngLyotViewPt.findViewById(R.id.WebRtcNsxPolicyModeEdTxtId)).setText("3");
+
+        ((TextView) m_WebRtcNsStngLyotViewPt.findViewById(R.id.WebRtcNsPolicyModeEdTxtId)).setText("3");
+
+        ((CheckBox) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsIsUseVadCkBoxId)).setChecked(true);
+        ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsVadProbStartEdTxtId)).setText("95");
+        ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsVadProbCntuEdTxtId)).setText("95");
+        ((CheckBox) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsIsUseAgcCkBoxId)).setChecked(true);
+        ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsAgcLevelEdTxtId)).setText("20000");
+        ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsAgcIncrementEdTxtId)).setText("10");
+        ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsAgcDecrementEdTxtId)).setText("-200");
+        ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsAgcMaxGainEdTxtId)).setText("20");
+
+        ((RadioButton) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexEncdUseCbrRdBtnId)).setChecked(true);
+        ((TextView) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexEncdCmplxtEdTxtId)).setText("4");
+        ((CheckBox) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexDecdIsUsePrcplEnhsmtCkBoxId)).setChecked(true);
+
+        ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdVdoTypeEdTxtId)).setText("0");
+        ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdBitrateCtrlModeEdTxtId)).setText("3");
+        ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdIDRFrmIntvlEdTxtId)).setText("15");
+        ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdCmplxtEdTxtId)).setText("0");
+
+        ((TextView) m_SystemH264CodecStngLyotViewPt.findViewById(R.id.SystemH264EncdBitrateCtrlModeEdTxtId)).setText("1");
+        ((TextView) m_SystemH264CodecStngLyotViewPt.findViewById(R.id.SystemH264EncdIDRFrmIntvlEdTxtId)).setText("1");
+        ((TextView) m_SystemH264CodecStngLyotViewPt.findViewById(R.id.SystemH264EncdCmplxtEdTxtId)).setText("1");
+    }
+
+    //效果等级：高。
+    public void OnClickUseEffectHighRdBtn(View ViewPt) {
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseEffectHighRdBtnId)).setChecked(true);
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseAdoSmplRate16000RdBtnId)).setChecked(true);
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseAdoFrmLen20msRdBtnId)).setChecked(true);
+        ((CheckBox) m_StngLyotViewPt.findViewById(R.id.IsUseSystemAecNsAgcCkBoxId)).setChecked(true);
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseSpeexWebRtcAecRdBtnId)).setChecked(true);
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseWebRtcNsRdBtnId)).setChecked(true);
+        ((CheckBox) m_StngLyotViewPt.findViewById(R.id.IsUseSpeexPrpocsCkBoxId)).setChecked(true);
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseSpeexCodecRdBtnId)).setChecked(true);
+        ((CheckBox) m_StngLyotViewPt.findViewById(R.id.IsSaveAdoToWaveFileCkBoxId)).setChecked(true);
+        ((CheckBox) m_StngLyotViewPt.findViewById(R.id.IsDrawAdoWavfmToSurfaceCkBoxId)).setChecked(false);
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseVdoSmplRate15RdBtnId)).setChecked(true);
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseVdoFrmSzPrsetRdBtnId)).setChecked(true);
+        ((Spinner) m_StngLyotViewPt.findViewById(R.id.VdoFrmSzPrsetSpinnerId)).setSelection(2);
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseOpenH264CodecRdBtnId)).setChecked(true);
+
+        ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecFilterLenMsecEdTxtId)).setText("500");
+        ((CheckBox) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecIsUseRecCkBoxId)).setChecked(true);
+        ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecEchoMutpEdTxtId)).setText("3.0");
+        ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecEchoCntuEdTxtId)).setText("0.65");
+        ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecEchoSupesEdTxtId)).setText("-32768");
+        ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecEchoSupesActEdTxtId)).setText("-32768");
+        ((CheckBox) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecIsSaveMemFileCkBoxId)).setChecked(false);
+
+        ((CheckBox) m_WebRtcAecmStngLyotViewPt.findViewById(R.id.WebRtcAecmIsUseCNGModeCkBoxId)).setChecked(false);
+        ((TextView) m_WebRtcAecmStngLyotViewPt.findViewById(R.id.WebRtcAecmEchoModeEdTxtId)).setText("4");
+        ((TextView) m_WebRtcAecmStngLyotViewPt.findViewById(R.id.WebRtcAecmDelayEdTxtId)).setText("0");
+
+        ((TextView) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecEchoModeEdTxtId)).setText("2");
+        ((TextView) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecDelayEdTxtId)).setText("0");
+        ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsUseDelayAgstcModeCkBoxId)).setChecked(true);
+        ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsUseExtdFilterModeCkBoxId)).setChecked(true);
+        ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsUseRefinedFilterAdaptAecModeCkBoxId)).setChecked(false);
+        ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsUseAdaptAdjDelayCkBoxId)).setChecked(true);
+        ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsSaveMemFileCkBoxId)).setChecked(false);
+
+        ((RadioButton) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWorkModeSpeexAecWebRtcAecmWebRtcAecRdBtnId)).setChecked(true);
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecFilterLenMsecEdTxtId)).setText("500");
+        ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecIsUseRecCkBoxId)).setChecked(true);
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecEchoMutpEdTxtId)).setText("1.0");
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecEchoCntuEdTxtId)).setText("0.6");
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecEchoSupesEdTxtId)).setText("-32768");
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecEchoSupesActEdTxtId)).setText("-32768");
+        ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecmIsUseCNGModeCkBoxId)).setChecked(false);
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecmEchoModeEdTxtId)).setText("4");
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecmDelayEdTxtId)).setText("0");
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecEchoModeEdTxtId)).setText("2");
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecDelayEdTxtId)).setText("0");
+        ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecIsUseDelayAgstcModeCkBoxId)).setChecked(true);
+        ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecIsUseExtdFilterModeCkBoxId)).setChecked(true);
+        ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecIsUseRefinedFilterAdaptAecModeCkBoxId)).setChecked(false);
+        ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecIsUseAdaptAdjDelayCkBoxId)).setChecked(true);
+        ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecIsUseSameRoomAecCkBoxId)).setChecked(false);
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSameRoomEchoMinDelayEdTxtId)).setText("380");
+
+        ((CheckBox) m_SpeexPrpocsNsStngLyotViewPt.findViewById(R.id.SpeexPrpocsIsUseNsCkBoxId)).setChecked(true);
+        ((TextView) m_SpeexPrpocsNsStngLyotViewPt.findViewById(R.id.SpeexPrpocsNoiseSupesEdTxtId)).setText("-32768");
+        ((CheckBox) m_SpeexPrpocsNsStngLyotViewPt.findViewById(R.id.SpeexPrpocsIsUseDereverbCkBoxId)).setChecked(true);
+
+        ((TextView) m_WebRtcNsxStngLyotViewPt.findViewById(R.id.WebRtcNsxPolicyModeEdTxtId)).setText("3");
+
+        ((TextView) m_WebRtcNsStngLyotViewPt.findViewById(R.id.WebRtcNsPolicyModeEdTxtId)).setText("3");
+
+        ((CheckBox) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsIsUseVadCkBoxId)).setChecked(true);
+        ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsVadProbStartEdTxtId)).setText("95");
+        ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsVadProbCntuEdTxtId)).setText("95");
+        ((CheckBox) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsIsUseAgcCkBoxId)).setChecked(true);
+        ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsAgcLevelEdTxtId)).setText("20000");
+        ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsAgcIncrementEdTxtId)).setText("10");
+        ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsAgcDecrementEdTxtId)).setText("-200");
+        ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsAgcMaxGainEdTxtId)).setText("20");
+
+        ((RadioButton) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexEncdUseVbrRdBtnId)).setChecked(true);
+        ((TextView) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexEncdCmplxtEdTxtId)).setText("8");
+        ((CheckBox) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexDecdIsUsePrcplEnhsmtCkBoxId)).setChecked(true);
+
+        ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdVdoTypeEdTxtId)).setText("0");
+        ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdBitrateCtrlModeEdTxtId)).setText("3");
+        ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdIDRFrmIntvlEdTxtId)).setText("15");
+        ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdCmplxtEdTxtId)).setText("0");
+
+        ((TextView) m_SystemH264CodecStngLyotViewPt.findViewById(R.id.SystemH264EncdBitrateCtrlModeEdTxtId)).setText("1");
+        ((TextView) m_SystemH264CodecStngLyotViewPt.findViewById(R.id.SystemH264EncdIDRFrmIntvlEdTxtId)).setText("1");
+        ((TextView) m_SystemH264CodecStngLyotViewPt.findViewById(R.id.SystemH264EncdCmplxtEdTxtId)).setText("2");
+    }
+
+    //效果等级：超。
+    public void OnClickUseEffectSuperRdBtn(View ViewPt) {
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseEffectSuperRdBtnId)).setChecked(true);
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseAdoSmplRate16000RdBtnId)).setChecked(true);
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseAdoFrmLen20msRdBtnId)).setChecked(true);
+        ((CheckBox) m_StngLyotViewPt.findViewById(R.id.IsUseSystemAecNsAgcCkBoxId)).setChecked(true);
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseSpeexWebRtcAecRdBtnId)).setChecked(true);
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseRNNoiseRdBtnId)).setChecked(true);
+        ((CheckBox) m_StngLyotViewPt.findViewById(R.id.IsUseSpeexPrpocsCkBoxId)).setChecked(true);
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseSpeexCodecRdBtnId)).setChecked(true);
+        ((CheckBox) m_StngLyotViewPt.findViewById(R.id.IsSaveAdoToWaveFileCkBoxId)).setChecked(true);
+        ((CheckBox) m_StngLyotViewPt.findViewById(R.id.IsDrawAdoWavfmToSurfaceCkBoxId)).setChecked(false);
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseVdoSmplRate24RdBtnId)).setChecked(true);
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseVdoFrmSzPrsetRdBtnId)).setChecked(true);
+        ((Spinner) m_StngLyotViewPt.findViewById(R.id.VdoFrmSzPrsetSpinnerId)).setSelection(2);
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseOpenH264CodecRdBtnId)).setChecked(true);
+
+        ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecFilterLenMsecEdTxtId)).setText("500");
+        ((CheckBox) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecIsUseRecCkBoxId)).setChecked(true);
+        ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecEchoMutpEdTxtId)).setText("3.0");
+        ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecEchoCntuEdTxtId)).setText("0.65");
+        ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecEchoSupesEdTxtId)).setText("-32768");
+        ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecEchoSupesActEdTxtId)).setText("-32768");
+        ((CheckBox) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecIsSaveMemFileCkBoxId)).setChecked(false);
+
+        ((CheckBox) m_WebRtcAecmStngLyotViewPt.findViewById(R.id.WebRtcAecmIsUseCNGModeCkBoxId)).setChecked(false);
+        ((TextView) m_WebRtcAecmStngLyotViewPt.findViewById(R.id.WebRtcAecmEchoModeEdTxtId)).setText("4");
+        ((TextView) m_WebRtcAecmStngLyotViewPt.findViewById(R.id.WebRtcAecmDelayEdTxtId)).setText("0");
+
+        ((TextView) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecEchoModeEdTxtId)).setText("2");
+        ((TextView) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecDelayEdTxtId)).setText("0");
+        ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsUseDelayAgstcModeCkBoxId)).setChecked(true);
+        ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsUseExtdFilterModeCkBoxId)).setChecked(true);
+        ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsUseRefinedFilterAdaptAecModeCkBoxId)).setChecked(false);
+        ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsUseAdaptAdjDelayCkBoxId)).setChecked(true);
+        ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsSaveMemFileCkBoxId)).setChecked(false);
+
+        ((RadioButton) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWorkModeSpeexAecWebRtcAecmWebRtcAecRdBtnId)).setChecked(true);
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecFilterLenMsecEdTxtId)).setText("500");
+        ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecIsUseRecCkBoxId)).setChecked(true);
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecEchoMutpEdTxtId)).setText("1.0");
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecEchoCntuEdTxtId)).setText("0.6");
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecEchoSupesEdTxtId)).setText("-32768");
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecEchoSupesActEdTxtId)).setText("-32768");
+        ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecmIsUseCNGModeCkBoxId)).setChecked(false);
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecmEchoModeEdTxtId)).setText("4");
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecmDelayEdTxtId)).setText("0");
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecEchoModeEdTxtId)).setText("2");
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecDelayEdTxtId)).setText("0");
+        ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecIsUseDelayAgstcModeCkBoxId)).setChecked(true);
+        ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecIsUseExtdFilterModeCkBoxId)).setChecked(true);
+        ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecIsUseRefinedFilterAdaptAecModeCkBoxId)).setChecked(false);
+        ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecIsUseAdaptAdjDelayCkBoxId)).setChecked(true);
+        ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecIsUseSameRoomAecCkBoxId)).setChecked(true);
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSameRoomEchoMinDelayEdTxtId)).setText("380");
+
+        ((CheckBox) m_SpeexPrpocsNsStngLyotViewPt.findViewById(R.id.SpeexPrpocsIsUseNsCkBoxId)).setChecked(true);
+        ((TextView) m_SpeexPrpocsNsStngLyotViewPt.findViewById(R.id.SpeexPrpocsNoiseSupesEdTxtId)).setText("-32768");
+        ((CheckBox) m_SpeexPrpocsNsStngLyotViewPt.findViewById(R.id.SpeexPrpocsIsUseDereverbCkBoxId)).setChecked(true);
+
+        ((TextView) m_WebRtcNsxStngLyotViewPt.findViewById(R.id.WebRtcNsxPolicyModeEdTxtId)).setText("3");
+
+        ((TextView) m_WebRtcNsStngLyotViewPt.findViewById(R.id.WebRtcNsPolicyModeEdTxtId)).setText("3");
+
+        ((CheckBox) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsIsUseVadCkBoxId)).setChecked(true);
+        ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsVadProbStartEdTxtId)).setText("95");
+        ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsVadProbCntuEdTxtId)).setText("95");
+        ((CheckBox) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsIsUseAgcCkBoxId)).setChecked(true);
+        ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsAgcLevelEdTxtId)).setText("20000");
+        ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsAgcIncrementEdTxtId)).setText("10");
+        ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsAgcDecrementEdTxtId)).setText("-200");
+        ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsAgcMaxGainEdTxtId)).setText("20");
+
+        ((RadioButton) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexEncdUseVbrRdBtnId)).setChecked(true);
+        ((TextView) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexEncdCmplxtEdTxtId)).setText("10");
+        ((CheckBox) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexDecdIsUsePrcplEnhsmtCkBoxId)).setChecked(true);
+
+        ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdVdoTypeEdTxtId)).setText("0");
+        ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdBitrateCtrlModeEdTxtId)).setText("3");
+        ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdIDRFrmIntvlEdTxtId)).setText("24");
+        ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdCmplxtEdTxtId)).setText("1");
+
+        ((TextView) m_SystemH264CodecStngLyotViewPt.findViewById(R.id.SystemH264EncdBitrateCtrlModeEdTxtId)).setText("1");
+        ((TextView) m_SystemH264CodecStngLyotViewPt.findViewById(R.id.SystemH264EncdIDRFrmIntvlEdTxtId)).setText("1");
+        ((TextView) m_SystemH264CodecStngLyotViewPt.findViewById(R.id.SystemH264EncdCmplxtEdTxtId)).setText("2");
+    }
+
+    //效果等级：特。
+    public void OnClickUseEffectPremiumRdBtn(View ViewPt) {
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseEffectPremiumRdBtnId)).setChecked(true);
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseAdoSmplRate32000RdBtnId)).setChecked(true);
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseAdoFrmLen20msRdBtnId)).setChecked(true);
+        ((CheckBox) m_StngLyotViewPt.findViewById(R.id.IsUseSystemAecNsAgcCkBoxId)).setChecked(true);
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseSpeexWebRtcAecRdBtnId)).setChecked(true);
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseRNNoiseRdBtnId)).setChecked(true);
+        ((CheckBox) m_StngLyotViewPt.findViewById(R.id.IsUseSpeexPrpocsCkBoxId)).setChecked(true);
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseSpeexCodecRdBtnId)).setChecked(true);
+        ((CheckBox) m_StngLyotViewPt.findViewById(R.id.IsSaveAdoToWaveFileCkBoxId)).setChecked(true);
+        ((CheckBox) m_StngLyotViewPt.findViewById(R.id.IsDrawAdoWavfmToSurfaceCkBoxId)).setChecked(false);
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseVdoSmplRate30RdBtnId)).setChecked(true);
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseVdoFrmSzPrsetRdBtnId)).setChecked(true);
+        ((Spinner) m_StngLyotViewPt.findViewById(R.id.VdoFrmSzPrsetSpinnerId)).setSelection(3);
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseOpenH264CodecRdBtnId)).setChecked(true);
+
+        ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecFilterLenMsecEdTxtId)).setText("500");
+        ((CheckBox) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecIsUseRecCkBoxId)).setChecked(true);
+        ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecEchoMutpEdTxtId)).setText("3.0");
+        ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecEchoCntuEdTxtId)).setText("0.65");
+        ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecEchoSupesEdTxtId)).setText("-32768");
+        ((TextView) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecEchoSupesActEdTxtId)).setText("-32768");
+        ((CheckBox) m_SpeexAecStngLyotViewPt.findViewById(R.id.SpeexAecIsSaveMemFileCkBoxId)).setChecked(false);
+
+        ((CheckBox) m_WebRtcAecmStngLyotViewPt.findViewById(R.id.WebRtcAecmIsUseCNGModeCkBoxId)).setChecked(false);
+        ((TextView) m_WebRtcAecmStngLyotViewPt.findViewById(R.id.WebRtcAecmEchoModeEdTxtId)).setText("4");
+        ((TextView) m_WebRtcAecmStngLyotViewPt.findViewById(R.id.WebRtcAecmDelayEdTxtId)).setText("0");
+
+        ((TextView) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecEchoModeEdTxtId)).setText("2");
+        ((TextView) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecDelayEdTxtId)).setText("0");
+        ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsUseDelayAgstcModeCkBoxId)).setChecked(true);
+        ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsUseExtdFilterModeCkBoxId)).setChecked(true);
+        ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsUseRefinedFilterAdaptAecModeCkBoxId)).setChecked(false);
+        ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsUseAdaptAdjDelayCkBoxId)).setChecked(true);
+        ((CheckBox) m_WebRtcAecStngLyotViewPt.findViewById(R.id.WebRtcAecIsSaveMemFileCkBoxId)).setChecked(false);
+
+        ((RadioButton) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWorkModeSpeexAecWebRtcAecmWebRtcAecRdBtnId)).setChecked(true);
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecFilterLenMsecEdTxtId)).setText("500");
+        ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecIsUseRecCkBoxId)).setChecked(true);
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecEchoMutpEdTxtId)).setText("1.0");
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecEchoCntuEdTxtId)).setText("0.6");
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecEchoSupesEdTxtId)).setText("-32768");
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSpeexAecEchoSupesActEdTxtId)).setText("-32768");
+        ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecmIsUseCNGModeCkBoxId)).setChecked(false);
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecmEchoModeEdTxtId)).setText("4");
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecmDelayEdTxtId)).setText("0");
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecEchoModeEdTxtId)).setText("2");
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecDelayEdTxtId)).setText("0");
+        ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecIsUseDelayAgstcModeCkBoxId)).setChecked(true);
+        ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecIsUseExtdFilterModeCkBoxId)).setChecked(true);
+        ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecIsUseRefinedFilterAdaptAecModeCkBoxId)).setChecked(false);
+        ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecWebRtcAecIsUseAdaptAdjDelayCkBoxId)).setChecked(true);
+        ((CheckBox) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecIsUseSameRoomAecCkBoxId)).setChecked(true);
+        ((TextView) m_SpeexWebRtcAecStngLyotViewPt.findViewById(R.id.SpeexWebRtcAecSameRoomEchoMinDelayEdTxtId)).setText("380");
+
+        ((CheckBox) m_SpeexPrpocsNsStngLyotViewPt.findViewById(R.id.SpeexPrpocsIsUseNsCkBoxId)).setChecked(true);
+        ((TextView) m_SpeexPrpocsNsStngLyotViewPt.findViewById(R.id.SpeexPrpocsNoiseSupesEdTxtId)).setText("-32768");
+        ((CheckBox) m_SpeexPrpocsNsStngLyotViewPt.findViewById(R.id.SpeexPrpocsIsUseDereverbCkBoxId)).setChecked(true);
+
+        ((TextView) m_WebRtcNsxStngLyotViewPt.findViewById(R.id.WebRtcNsxPolicyModeEdTxtId)).setText("3");
+
+        ((TextView) m_WebRtcNsStngLyotViewPt.findViewById(R.id.WebRtcNsPolicyModeEdTxtId)).setText("3");
+
+        ((CheckBox) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsIsUseVadCkBoxId)).setChecked(true);
+        ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsVadProbStartEdTxtId)).setText("95");
+        ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsVadProbCntuEdTxtId)).setText("95");
+        ((CheckBox) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsIsUseAgcCkBoxId)).setChecked(true);
+        ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsAgcLevelEdTxtId)).setText("20000");
+        ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsAgcIncrementEdTxtId)).setText("10");
+        ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsAgcDecrementEdTxtId)).setText("-200");
+        ((TextView) m_SpeexPrpocsStngLyotViewPt.findViewById(R.id.SpeexPrpocsAgcMaxGainEdTxtId)).setText("20");
+
+        ((RadioButton) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexEncdUseVbrRdBtnId)).setChecked(true);
+        ((TextView) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexEncdCmplxtEdTxtId)).setText("10");
+        ((CheckBox) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexDecdIsUsePrcplEnhsmtCkBoxId)).setChecked(true);
+
+        ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdVdoTypeEdTxtId)).setText("0");
+        ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdBitrateCtrlModeEdTxtId)).setText("3");
+        ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdIDRFrmIntvlEdTxtId)).setText("30");
+        ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdCmplxtEdTxtId)).setText("2");
+
+        ((TextView) m_SystemH264CodecStngLyotViewPt.findViewById(R.id.SystemH264EncdBitrateCtrlModeEdTxtId)).setText("1");
+        ((TextView) m_SystemH264CodecStngLyotViewPt.findViewById(R.id.SystemH264EncdIDRFrmIntvlEdTxtId)).setText("1");
+        ((TextView) m_SystemH264CodecStngLyotViewPt.findViewById(R.id.SystemH264EncdCmplxtEdTxtId)).setText("2");
+    }
+
+    //比特率等级：低。
+    public void OnClickUseBitrateLowRdBtn(View ViewPt) {
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseBitrateLowRdBtnId)).setChecked(true);
+
+        ((TextView) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexEncdQualtEdTxtId)).setText("1");
+        ((TextView) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexEncdPlcExptLossRateEdTxtId)).setText("1");
+
+        ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdEncdBitrateEdTxtId)).setText("10");
+
+        ((TextView) m_SystemH264CodecStngLyotViewPt.findViewById(R.id.SystemH264EncdEncdBitrateEdTxtId)).setText("10");
+    }
+
+    //比特率等级：中。
+    public void OnClickUseBitrateMidRdBtn(View ViewPt) {
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseBitrateMidRdBtnId)).setChecked(true);
+
+        ((TextView) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexEncdQualtEdTxtId)).setText("4");
+        ((TextView) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexEncdPlcExptLossRateEdTxtId)).setText("40");
+
+        ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdEncdBitrateEdTxtId)).setText("20");
+
+        ((TextView) m_SystemH264CodecStngLyotViewPt.findViewById(R.id.SystemH264EncdEncdBitrateEdTxtId)).setText("20");
+    }
+
+    //比特率等级：高。
+    public void OnClickUseBitrateHighRdBtn(View ViewPt) {
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseBitrateHighRdBtnId)).setChecked(true);
+
+        ((TextView) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexEncdQualtEdTxtId)).setText("8");
+        ((TextView) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexEncdPlcExptLossRateEdTxtId)).setText("80");
+
+        ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdEncdBitrateEdTxtId)).setText("40");
+
+        ((TextView) m_SystemH264CodecStngLyotViewPt.findViewById(R.id.SystemH264EncdEncdBitrateEdTxtId)).setText("40");
+    }
+
+    //比特率等级：超。
+    public void OnClickUseBitrateSuperRdBtn(View ViewPt) {
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseBitrateSuperRdBtnId)).setChecked(true);
+
+        ((TextView) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexEncdQualtEdTxtId)).setText("10");
+        ((TextView) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexEncdPlcExptLossRateEdTxtId)).setText("100");
+
+        ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdEncdBitrateEdTxtId)).setText("60");
+
+        ((TextView) m_SystemH264CodecStngLyotViewPt.findViewById(R.id.SystemH264EncdEncdBitrateEdTxtId)).setText("60");
+    }
+
+    //比特率等级：特。
+    public void OnClickUseBitratePremiumRdBtn(View ViewPt) {
+        ((RadioButton) m_StngLyotViewPt.findViewById(R.id.UseBitratePremiumRdBtnId)).setChecked(true);
+
+        ((TextView) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexEncdQualtEdTxtId)).setText("10");
+        ((TextView) m_SpeexCodecStngLyotViewPt.findViewById(R.id.SpeexEncdPlcExptLossRateEdTxtId)).setText("100");
+
+        ((TextView) m_OpenH264CodecStngLyotViewPt.findViewById(R.id.OpenH264EncdEncdBitrateEdTxtId)).setText("80");
+
+        ((TextView) m_SystemH264CodecStngLyotViewPt.findViewById(R.id.SystemH264EncdEncdBitrateEdTxtId)).setText("80");
+    }
+
+    //Speex声学回音消除器设置按钮。
+    public void OnClickSpeexAecStngBtn(View ViewPt) {
+        setContentView(m_SpeexAecStngLyotViewPt);
+        m_CurActivityLyotViewPt = m_SpeexAecStngLyotViewPt;
+    }
+
+    //WebRtc定点版声学回音消除器设置按钮。
+    public void OnClickWebRtcAecmStngBtn(View ViewPt) {
+        setContentView(m_WebRtcAecmStngLyotViewPt);
+        m_CurActivityLyotViewPt = m_WebRtcAecmStngLyotViewPt;
+    }
+
+    //WebRtc浮点版声学回音消除器设置按钮。
+    public void OnClickWebRtcAecStngBtn(View ViewPt) {
+        setContentView(m_WebRtcAecStngLyotViewPt);
+        m_CurActivityLyotViewPt = m_WebRtcAecStngLyotViewPt;
+    }
+
+    //SpeexWebRtc三重声学回音消除器设置按钮。
+    public void OnClickSpeexWebRtcAecStngBtn(View ViewPt) {
+        setContentView(m_SpeexWebRtcAecStngLyotViewPt);
+        m_CurActivityLyotViewPt = m_SpeexWebRtcAecStngLyotViewPt;
+    }
+
+    //Speex预处理器的噪音抑制设置按钮。
+    public void OnClickSpeexPrpocsNsStngBtn(View ViewPt) {
+        setContentView(m_SpeexPrpocsNsStngLyotViewPt);
+        m_CurActivityLyotViewPt = m_SpeexPrpocsNsStngLyotViewPt;
+    }
+
+    //WebRtc定点版噪音抑制器设置按钮。
+    public void OnClickWebRtcNsxStngBtn(View ViewPt) {
+        setContentView(m_WebRtcNsxStngLyotViewPt);
+        m_CurActivityLyotViewPt = m_WebRtcNsxStngLyotViewPt;
+    }
+
+    //WebRtc浮点版噪音抑制器设置按钮。
+    public void OnClickWebRtcNsStngBtn(View ViewPt) {
+        setContentView(m_WebRtcNsStngLyotViewPt);
+        m_CurActivityLyotViewPt = m_WebRtcNsStngLyotViewPt;
+    }
+
+    //Speex预处理器设置按钮。
+    public void OnClickSpeexPrpocsStngBtn(View ViewPt) {
+        setContentView(m_SpeexPrpocsStngLyotViewPt);
+        m_CurActivityLyotViewPt = m_SpeexPrpocsStngLyotViewPt;
+    }
+
+    //Speex编解码器设置按钮。
+    public void OnClickSpeexCodecStngBtn(View ViewPt) {
+        setContentView(m_SpeexCodecStngLyotViewPt);
+        m_CurActivityLyotViewPt = m_SpeexCodecStngLyotViewPt;
+    }
+
+    //Opus编解码器设置按钮。
+    public void OnClickOpusCodecStngBtn(View ViewPt) {
+
+    }
+
+    //OpenH264编解码器设置按钮。
+    public void OnClickOpenH264CodecStngBtn(View ViewPt) {
+        setContentView(m_OpenH264CodecStngLyotViewPt);
+        m_CurActivityLyotViewPt = m_OpenH264CodecStngLyotViewPt;
+    }
+
+    //系统自带H264编解码器设置按钮。
+    public void OnClickSystemH264CodecStngBtn(View ViewPt) {
+        setContentView(m_SystemH264CodecStngLyotViewPt);
+        m_CurActivityLyotViewPt = m_SystemH264CodecStngLyotViewPt;
+    }
+
+    //传输协议设置确定按钮。
+    public void OnClickXfrPrtclStngOkBtn(View ViewPt) {
+        setContentView(m_MainLyotViewPt);
+        m_CurActivityLyotViewPt = m_MainLyotViewPt;
+    }
+
+    //设置布局的确定按钮。
+    public void OnClickStngOkBtn(View ViewPt) {
+        setContentView(m_MainLyotViewPt);
+        m_CurActivityLyotViewPt = m_MainLyotViewPt;
+    }
+
+    //音频自适应抖动缓冲器设置布局的确定按钮。
+    public void OnClickAjbStngOkBtn(View ViewPt) {
+        setContentView(m_StngLyotViewPt);
+        m_CurActivityLyotViewPt = m_StngLyotViewPt;
+    }
+
+    //Speex声学回音消除器设置布局的删除内存块文件按钮。
+    public void OnClickSpeexAecDelMemFileBtn(View ViewPt) {
+        String p_SpeexAecMemFileFullPathStrPt = m_ExternalDirFullAbsPathStrPt + "/SpeexAecMem";
+        File file = new File(p_SpeexAecMemFileFullPathStrPt);
+        if (file.exists()) {
+            if (file.delete()) {
+                Toast.makeText(this, "删除Speex声学回音消除器的内存块文件 " + p_SpeexAecMemFileFullPathStrPt + " 成功。", Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(this, "删除Speex声学回音消除器的内存块文件 " + p_SpeexAecMemFileFullPathStrPt + " 失败。", Toast.LENGTH_LONG).show();
+            }
+        } else {
+            Toast.makeText(this, "Speex声学回音消除器的内存块文件 " + p_SpeexAecMemFileFullPathStrPt + " 不存在。", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    //Speex声学回音消除器设置布局的确定按钮。
+    public void OnClickSpeexAecStngOkBtn(View ViewPt) {
+        setContentView(m_StngLyotViewPt);
+        m_CurActivityLyotViewPt = m_StngLyotViewPt;
+    }
+
+    //WebRtc定点版声学回音消除器设置布局的确定按钮。
+    public void OnClickWebRtcAecmStngOkBtn(View ViewPt) {
+        setContentView(m_StngLyotViewPt);
+        m_CurActivityLyotViewPt = m_StngLyotViewPt;
+    }
+
+    //WebRtc浮点版声学回音消除器设置布局的删除内存块文件按钮。
+    public void OnClickWebRtcAecDelMemFileBtn(View ViewPt) {
+        String p_WebRtcAecMemFileFullPathStrPt = m_ExternalDirFullAbsPathStrPt + "/WebRtcAecMem";
+        File file = new File(p_WebRtcAecMemFileFullPathStrPt);
+        if (file.exists()) {
+            if (file.delete()) {
+                Toast.makeText(this, "删除WebRtc浮点版声学回音消除器的内存块文件 " + p_WebRtcAecMemFileFullPathStrPt + " 成功。", Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(this, "删除WebRtc浮点版声学回音消除器的内存块文件 " + p_WebRtcAecMemFileFullPathStrPt + " 失败。", Toast.LENGTH_LONG).show();
+            }
+        } else {
+            Toast.makeText(this, "WebRtc浮点版声学回音消除器的内存块文件 " + p_WebRtcAecMemFileFullPathStrPt + " 不存在。", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    //WebRtc浮点版声学回音消除器设置布局的确定按钮。
+    public void OnClickWebRtcAecStngOkBtn(View ViewPt) {
+        setContentView(m_StngLyotViewPt);
+        m_CurActivityLyotViewPt = m_StngLyotViewPt;
+    }
+
+    //SpeexWebRtc三重声学回音消除器设置布局的确定按钮。
+    public void OnClickSpeexWebRtcAecStngOkBtn(View ViewPt) {
+        setContentView(m_StngLyotViewPt);
+        m_CurActivityLyotViewPt = m_StngLyotViewPt;
+    }
+
+    //Speex预处理器的噪音抑制设置布局的确定按钮。
+    public void OnClickSpeexPrpocsNsStngOkBtn(View ViewPt) {
+        setContentView(m_StngLyotViewPt);
+        m_CurActivityLyotViewPt = m_StngLyotViewPt;
+    }
+
+    //WebRtc定点版噪音抑制器设置布局的确定按钮。
+    public void OnClickWebRtcNsxStngOkBtn(View ViewPt) {
+        setContentView(m_StngLyotViewPt);
+        m_CurActivityLyotViewPt = m_StngLyotViewPt;
+    }
+
+    //WebRtc浮点版噪音抑制器设置布局的确定按钮。
+    public void OnClickWebRtcNsStngOkBtn(View ViewPt) {
+        setContentView(m_StngLyotViewPt);
+        m_CurActivityLyotViewPt = m_StngLyotViewPt;
+    }
+
+    //Speex预处理器的其他功能设置布局的确定按钮。
+    public void OnClickSpeexPrpocsStngOkBtn(View ViewPt) {
+        setContentView(m_StngLyotViewPt);
+        m_CurActivityLyotViewPt = m_StngLyotViewPt;
+    }
+
+    //Speex编解码器设置布局的确定按钮。
+    public void OnClickSpeexCodecStngOkBtn(View ViewPt) {
+        setContentView(m_StngLyotViewPt);
+        m_CurActivityLyotViewPt = m_StngLyotViewPt;
+    }
+
+    //Opus编解码器设置布局的确定按钮。
+    public void OnOpusCodecSettingOkClick(View ViewPt) {
+        setContentView(m_StngLyotViewPt);
+        m_CurActivityLyotViewPt = m_StngLyotViewPt;
+    }
+
+    //OpenH264编解码器设置布局的确定按钮。
+    public void OnClickOpenH264CodecStngOkBtn(View ViewPt) {
+        setContentView(m_StngLyotViewPt);
+        m_CurActivityLyotViewPt = m_StngLyotViewPt;
+    }
+
+    //系统自带H264编解码器设置布局的确定按钮。
+    public void OnClickSystemH264CodecStngOkBtn(View ViewPt) {
+        setContentView(m_StngLyotViewPt);
+        m_CurActivityLyotViewPt = m_StngLyotViewPt;
+    }
+}
