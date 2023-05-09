@@ -176,8 +176,6 @@ public class MainActivity extends AppCompatActivity {
     String m_CurClsNameStrPt = this.getClass().getSimpleName(); //存放当前类名称字符串。
 
     View m_MainLyotViewPt; //存放主布局视图的指针。
-    View m_XfrPrtclStngLyotViewPt; //存放传输协议设置布局视图的指针。
-
 
     View m_CurActivityLyotViewPt; //存放当前界面布局视图的指针。
     MyMediaPocsThrd m_MyMediaPocsThrdPt; //存放媒体处理线程的指针。
@@ -203,8 +201,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(m_MainLyotViewPt); //设置主界面的内容为主布局。
         m_CurActivityLyotViewPt = m_MainLyotViewPt; //设置当前界面布局视图。
 
-        //请求权限。
-        MediaPocsThrd.RqstPrmsn(this, 1, 1, 1, 1, 0, 1, 1, 1, 1);
 
         //初始化消息处理。
         m_MainActivityHandlerPt = new MainActivityHandler();
