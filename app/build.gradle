@@ -8,11 +8,11 @@ android {
         applicationId "com.example.andrd_ado_vdo_tkbk_demo"
 
         //minSdkVersion 9
-        minSdkVersion 14
+        minSdkVersion 19
         //noinspection ExpiredTargetSdkVersion
-        targetSdk 30
+        targetSdk 26
         versionCode 1
-        versionName "2023.04.17"
+        versionName "2023.05.10"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
