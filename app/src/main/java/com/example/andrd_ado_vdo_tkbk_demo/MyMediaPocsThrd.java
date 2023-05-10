@@ -1,5 +1,7 @@
 package com.example.andrd_ado_vdo_tkbk_demo;
 
+import static com.example.andrd_ado_vdo_tkbk_demo.MainActivityHandler.*;
+
 import android.os.Handler;
 import android.os.Message;
 import android.os.SystemClock;
@@ -18,16 +20,17 @@ public class MyMediaPocsThrd extends MediaPocsThrd {
     MainActivity m_MainActivityPt; //存放主界面的指针。
     Handler m_MainActivityHandlerPt; //存放主界面消息处理的指针。
     public int m_IsInterrupt; //存放是否中断，为0表示未中断，为1表示已中断。
+    private Message p_messagePt;
 
     static class TalkNetwork //存放网络。
     {
         String m_IPAddrStrPt; //存放IP地址字符串的指针。
         String m_PortStrPt; //存放端口字符串的指针。
-        int m_XfrMode; //存放传输模式，为0表示实时半双工（一键通），为1表示实时全双工。
+        int m_XfrMode;     //存放传输模式，为0表示实时半双工（一键通），为1表示实时全双工。
         int m_PttBtnIsDown; //存放一键即按即通按钮是否按下，为0表示弹起，为非0表示按下。
         int m_MaxCnctTimes; //存放最大连接次数，取值区间为[1,2147483647]。
         int m_UseWhatXfrPrtcl; //存放使用什么传输协议，为0表示TCP协议，为1表示UDP协议。
-        int m_IsCreateSrvrOrClnt; //存放创建服务端或者客户端标记，为1表示创建服务端，为0表示创建客户端。
+        int m_IsCreateSrvrOrClnt;  //存放创建服务端或者客户端标记，为1表示创建服务端，为0表示创建客户端。
         TcpSrvrSokt m_TcpSrvrSoktPt; //存放本端TCP协议服务端套接字的指针。
         TcpClntSokt m_TcpClntSoktPt; //存放本端TCP协议客户端套接字的指针。
         AudpSokt m_AudpSoktPt; //存放本端高级UDP协议套接字的指针。
@@ -46,8 +49,8 @@ public class MyMediaPocsThrd extends MediaPocsThrd {
         Exit, //退出包。
     }
 
-    int m_IsAutoAllowCnct; //存放是否自动允许连接，为0表示手动，为1表示自动。
-    int m_RqstCnctRslt; //存放请求连接的结果，为0表示没有选择，为1表示允许，为2表示拒绝。
+    int m_IsAutoAllowCnct;   //存放是否自动允许连接，为0表示手动，为1表示自动。
+    int m_RqstCnctRslt;      //存放请求连接的结果，为0表示没有选择，为1表示允许，为2表示拒绝。
 
     public enum TkbkMode //对讲模式。
     {
@@ -122,484 +125,286 @@ public class MyMediaPocsThrd extends MediaPocsThrd {
     }
 
     //用户定义的初始化函数。
+    /**
+     * 用户定义的初始化函数。
+     * @return 为0表示成功，为非0表示失败
+     */
     @Override
     public int UserInit() {
-        int p_Rslt = -1; //存放本函数执行结果的值，为0表示成功，为非0表示失败。
+
         HTString p_LclNodeAddrPt = new HTString();
         HTString p_LclNodePortPt = new HTString();
         HTString p_RmtNodeAddrPt = new HTString();
         HTString p_RmtNodePortPt = new HTString();
 
-        Out:
+
+        toSendMessage4();  //向主界面发送初始化媒体处理线程的消息。
+        initData();
+
+        //如果要使用UDP协议。
+        mTalkNetwork.m_AudpSoktPt = new AudpSokt();
+        mTalkNetwork.m_AudpCnctIdx = new HTLong();
+
+        if (mTalkNetwork.m_IsCreateSrvrOrClnt == 1) //如果是创建本端高级UDP协议套接字接受远端高级UDP协议套接字的连接。--服务端
         {
+            if (mTalkNetwork.m_AudpSoktPt.Init(4, mTalkNetwork.m_IPAddrStrPt, mTalkNetwork.m_PortStrPt, (short) 1, (short) 5000, m_ErrInfoVstrPt) == 0) //如果初始化本端高级UDP协议套接字成功。
             {
-                Message p_MessagePt = new Message();
-                p_MessagePt.what = MainActivityHandler.Msg.MediaPocsThrdInit.ordinal();
-                m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-            } //向主界面发送初始化媒体处理线程的消息。
+                if (mTalkNetwork.m_AudpSoktPt.GetLclAddr(null, p_LclNodeAddrPt, p_LclNodePortPt, m_ErrInfoVstrPt) != 0) //如果获取本端高级UDP协议套接字绑定的本地节点地址和端口失败。
+                {
+                    String p_InfoStrPt = "获取本端高级UDP协议套接字绑定的本地节点地址和端口失败。原因：" + m_ErrInfoVstrPt.GetStr();
+                    toSendMessage(p_InfoStrPt);
+                    return -1;
+                }
 
-            m_RqstCnctRslt = 0; //设置请求连接的结果为没有选择。
-            m_IsRecvExitPkt = 0; //设置没有接收到退出包。
-            if (m_TmpBytePt == null) m_TmpBytePt = new byte[1024 * 1024]; //初始化临时数据。
-            if (m_TmpByte2Pt == null) m_TmpByte2Pt = new byte[1024 * 1024]; //初始化临时数据。
-            if (m_TmpByte3Pt == null) m_TmpByte3Pt = new byte[1024 * 1024]; //初始化临时数据。
-            if (m_TmpHTIntPt == null) m_TmpHTIntPt = new HTInt(); //初始化临时数据。
-            if (m_TmpHTInt2Pt == null) m_TmpHTInt2Pt = new HTInt(); //初始化临时数据。
-            if (m_TmpHTInt3Pt == null) m_TmpHTInt3Pt = new HTInt(); //初始化临时数据。
-            if (m_TmpHTLongPt == null) m_TmpHTLongPt = new HTLong(); //初始化临时数据。
-            if (m_TmpHTLong2Pt == null) m_TmpHTLong2Pt = new HTLong(); //初始化临时数据。
-            if (m_TmpHTLong3Pt == null) m_TmpHTLong3Pt = new HTLong(); //初始化临时数据。
-
-            if (mTalkNetwork.m_UseWhatXfrPrtcl == 0) //如果要使用TCP协议。
+                String p_InfoStrPt = "初始化本端高级UDP协议套接字[" + p_LclNodeAddrPt.m_Val + ":" + p_LclNodePortPt.m_Val + "]成功。";
+                toSendMessage1(p_InfoStrPt);
+            } else   //如果初始化本端高级UDP协议套接字失败。
             {
-                if (mTalkNetwork.m_IsCreateSrvrOrClnt == 1) //如果是创建本端TCP协议服务端套接字接受远端TCP协议客户端套接字的连接。
-                {
-                    mTalkNetwork.m_TcpSrvrSoktPt = new TcpSrvrSokt();
+                String p_InfoStrPt = "初始化本端高级UDP协议套接字[" + mTalkNetwork.m_IPAddrStrPt + ":" + mTalkNetwork.m_PortStrPt + "]失败。原因：" + m_ErrInfoVstrPt.GetStr();
+                toSendMessage(p_InfoStrPt);
+                return -1;
+            }
 
-                    if (mTalkNetwork.m_TcpSrvrSoktPt.Init(4, mTalkNetwork.m_IPAddrStrPt, mTalkNetwork.m_PortStrPt, 1, 1, m_ErrInfoVstrPt) == 0) //如果初始化本端TCP协议服务端套接字成功。
-                    {
-                        if (mTalkNetwork.m_TcpSrvrSoktPt.GetLclAddr(null, p_LclNodeAddrPt, p_LclNodePortPt, 0, m_ErrInfoVstrPt) != 0) //如果获取本端TCP协议服务端套接字绑定的本地节点地址和端口失败。
-                        {
-                            String p_InfoStrPt = "获取本端TCP协议服务端套接字绑定的本地节点地址和端口失败。原因：" + m_ErrInfoVstrPt.GetStr();
-                            if (m_IsPrintLogcat != 0) Log.e(m_CurClsNameStrPt, p_InfoStrPt);
-                            Message p_MessagePt = new Message();
-                            p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                            p_MessagePt.obj = p_InfoStrPt;
-                            m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                            break Out;
-                        }
-
-                        String p_InfoStrPt = "初始化本端TCP协议服务端套接字[" + p_LclNodeAddrPt.m_Val + ":" + p_LclNodePortPt.m_Val + "]成功。";
-                        if (m_IsPrintLogcat != 0) Log.i(m_CurClsNameStrPt, p_InfoStrPt);
-                        Message p_MessagePt = new Message();
-                        p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                        p_MessagePt.obj = p_InfoStrPt;
-                        m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                    } else //如果初始化本端TCP协议服务端套接字失败。
-                    {
-                        String p_InfoStrPt = "初始化本端TCP协议服务端套接字[" + mTalkNetwork.m_IPAddrStrPt + ":" + mTalkNetwork.m_PortStrPt + "]失败。原因：" + m_ErrInfoVstrPt.GetStr();
-                        if (m_IsPrintLogcat != 0) Log.e(m_CurClsNameStrPt, p_InfoStrPt);
-                        Message p_MessagePt = new Message();
-                        p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                        p_MessagePt.obj = p_InfoStrPt;
-                        m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                        break Out;
-                    }
-
-                    mTalkNetwork.m_TcpClntSoktPt = new TcpClntSokt();
-
-                    while (true) //循环接受远端TCP协议客户端套接字的连接。
-                    {
-                        if (mTalkNetwork.m_TcpSrvrSoktPt.Acpt(mTalkNetwork.m_TcpClntSoktPt, null, p_RmtNodeAddrPt, p_RmtNodePortPt, (short) 1, 0, m_ErrInfoVstrPt) == 0) {
-                            if (mTalkNetwork.m_TcpClntSoktPt.m_TcpClntSoktPt != 0) //如果用本端TCP协议服务端套接字接受远端TCP协议客户端套接字的连接成功。
-                            {
-                                mTalkNetwork.m_TcpSrvrSoktPt.Dstoy(null); //关闭并销毁本端TCP协议服务端套接字，防止还有其他远端TCP协议客户端套接字继续连接。
-                                mTalkNetwork.m_TcpSrvrSoktPt = null;
-
-                                String p_InfoStrPt = "用本端TCP协议服务端套接字接受远端TCP协议客户端套接字[" + p_RmtNodeAddrPt.m_Val + ":" + p_RmtNodePortPt.m_Val + "]的连接成功。";
-                                if (m_IsPrintLogcat != 0) Log.i(m_CurClsNameStrPt, p_InfoStrPt);
-                                Message p_MessagePt = new Message();
-                                p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                                p_MessagePt.obj = p_InfoStrPt;
-                                m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                                break;
-                            } //如果用本端TCP协议服务端套接字接受远端TCP协议客户端套接字的连接超时，就重新接受。
-                        } else {
-                            mTalkNetwork.m_TcpClntSoktPt = null;
-
-                            String p_InfoStrPt = "用本端TCP协议服务端套接字接受远端TCP协议客户端套接字的连接失败。原因：" + m_ErrInfoVstrPt.GetStr();
-                            if (m_IsPrintLogcat != 0) Log.e(m_CurClsNameStrPt, p_InfoStrPt);
-                            Message p_MessagePt = new Message();
-                            p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                            p_MessagePt.obj = p_InfoStrPt;
-                            m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                            break Out;
-                        }
-
-                        if (m_ReadyExitCnt != 0) //如果本线程接收到退出请求。
-                        {
-                            mTalkNetwork.m_TcpClntSoktPt = null;
-                            if (m_IsPrintLogcat != 0)
-                                Log.i(m_CurClsNameStrPt, "本线程接收到退出请求，开始准备退出。");
-                            break Out;
-                        }
-                    }
-                } else if (mTalkNetwork.m_IsCreateSrvrOrClnt == 0) //如果是创建本端TCP协议客户端套接字连接远端TCP协议服务端套接字。
-                {
-                    //Ping一下远程节点地址，这样可以快速获取局域网的ARP条目，从而避免连接失败。
-                    try {
-                        Runtime.getRuntime().exec("ping -c 1 -w 1 " + mTalkNetwork.m_IPAddrStrPt);
-                    } catch (Exception ignored) {
-                    }
-
-                    mTalkNetwork.m_TcpClntSoktPt = new TcpClntSokt();
-
-                    int p_CurCnctTimes = 1;
-                    LoopCnct:
-                    while (true) //循环连接远端TCP协议服务端套接字。
-                    {
-                        {
-                            String p_InfoStrPt = "开始第 " + p_CurCnctTimes + " 次连接。";
-                            if (m_IsPrintLogcat != 0) Log.i(m_CurClsNameStrPt, p_InfoStrPt);
-                            Message p_MessagePt = new Message();
-                            p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                            p_MessagePt.obj = p_InfoStrPt;
-                            m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                        }
-
-                        if (mTalkNetwork.m_TcpClntSoktPt.Init(4, mTalkNetwork.m_IPAddrStrPt, mTalkNetwork.m_PortStrPt, null, null, (short) 5000, m_ErrInfoVstrPt) == 0) //如果初始化本端TCP协议客户端套接字，并连接远端TCP协议服务端套接字成功。
-                        {
-                            if (mTalkNetwork.m_TcpClntSoktPt.GetLclAddr(null, p_LclNodeAddrPt, p_LclNodePortPt, 0, m_ErrInfoVstrPt) != 0) {
-                                String p_InfoStrPt = "获取本端TCP协议客户端套接字绑定的本地节点地址和端口失败。原因：" + m_ErrInfoVstrPt.GetStr();
-                                if (m_IsPrintLogcat != 0) Log.e(m_CurClsNameStrPt, p_InfoStrPt);
-                                Message p_MessagePt = new Message();
-                                p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                                p_MessagePt.obj = p_InfoStrPt;
-                                m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                                break Out;
-                            }
-                            if (mTalkNetwork.m_TcpClntSoktPt.GetRmtAddr(null, p_RmtNodeAddrPt, p_RmtNodePortPt, 0, m_ErrInfoVstrPt) != 0) {
-                                String p_InfoStrPt = "获取本端TCP协议客户端套接字连接的远端TCP协议客户端套接字绑定的远程节点地址和端口失败。原因：" + m_ErrInfoVstrPt.GetStr();
-                                if (m_IsPrintLogcat != 0) Log.e(m_CurClsNameStrPt, p_InfoStrPt);
-                                Message p_MessagePt = new Message();
-                                p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                                p_MessagePt.obj = p_InfoStrPt;
-                                m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                                break Out;
-                            }
-
-                            String p_InfoStrPt = "初始化本端TCP协议客户端套接字[" + p_LclNodeAddrPt.m_Val + ":" + p_LclNodePortPt.m_Val + "]，并连接远端TCP协议服务端套接字[" + p_RmtNodeAddrPt.m_Val + ":" + p_RmtNodePortPt.m_Val + "]成功。";
-                            if (m_IsPrintLogcat != 0) Log.i(m_CurClsNameStrPt, p_InfoStrPt);
-                            Message p_MessagePt = new Message();
-                            p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                            p_MessagePt.obj = p_InfoStrPt;
-                            m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                            break LoopCnct; //跳出重连。
-                        } else {
-                            String p_InfoStrPt = "初始化本端TCP协议客户端套接字，并连接远端TCP协议服务端套接字[" + mTalkNetwork.m_IPAddrStrPt + ":" + mTalkNetwork.m_PortStrPt + "]失败。原因：" + m_ErrInfoVstrPt.GetStr();
-                            if (m_IsPrintLogcat != 0) Log.e(m_CurClsNameStrPt, p_InfoStrPt);
-                            Message p_MessagePt = new Message();
-                            p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                            p_MessagePt.obj = p_InfoStrPt;
-                            m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                        }
-
-                        p_CurCnctTimes++; //递增当前连接次数。
-                        if (p_CurCnctTimes > mTalkNetwork.m_MaxCnctTimes) {
-                            mTalkNetwork.m_TcpClntSoktPt = null;
-
-                            String p_InfoStrPt = "达到最大连接次数，中断连接。";
-                            if (m_IsPrintLogcat != 0) Log.e(m_CurClsNameStrPt, p_InfoStrPt);
-                            Message p_MessagePt = new Message();
-                            p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                            p_MessagePt.obj = p_InfoStrPt;
-                            m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                            break Out;
-                        }
-
-                        if (m_ReadyExitCnt != 0) //如果本线程接收到退出请求。
-                        {
-                            mTalkNetwork.m_TcpClntSoktPt = null;
-                            if (m_IsPrintLogcat != 0)
-                                Log.i(m_CurClsNameStrPt, "本线程接收到退出请求，开始准备退出。");
-                            break Out;
-                        }
-                    }
-                }
-
-                if (mTalkNetwork.m_TcpClntSoktPt.SetNoDelay(1, 0, m_ErrInfoVstrPt) != 0) //如果设置本端TCP协议客户端套接字的Nagle延迟算法状态为禁用失败。
-                {
-                    String p_InfoStrPt = "设置本端TCP协议客户端套接字的Nagle延迟算法状态为禁用失败。原因：" + m_ErrInfoVstrPt.GetStr();
-                    if (m_IsPrintLogcat != 0) Log.i(m_CurClsNameStrPt, p_InfoStrPt);
-                    Message p_MessagePt = new Message();
-                    p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                    p_MessagePt.obj = p_InfoStrPt;
-                    m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                    break Out;
-                }
-
-                if (mTalkNetwork.m_TcpClntSoktPt.SetSendBufSz(1024 * 1024, 0, m_ErrInfoVstrPt) != 0) {
-                    String p_InfoStrPt = "设置本端TCP协议客户端套接字的发送缓冲区大小失败。原因：" + m_ErrInfoVstrPt.GetStr();
-                    if (m_IsPrintLogcat != 0) Log.e(m_CurClsNameStrPt, p_InfoStrPt);
-                    Message p_MessagePt = new Message();
-                    p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                    p_MessagePt.obj = p_InfoStrPt;
-                    m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                    break Out;
-                }
-
-                if (mTalkNetwork.m_TcpClntSoktPt.SetRecvBufSz(1024 * 1024, 0, m_ErrInfoVstrPt) != 0) {
-                    String p_InfoStrPt = "设置本端TCP协议客户端套接字的接收缓冲区大小失败。原因：" + m_ErrInfoVstrPt.GetStr();
-                    if (m_IsPrintLogcat != 0) Log.e(m_CurClsNameStrPt, p_InfoStrPt);
-                    Message p_MessagePt = new Message();
-                    p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                    p_MessagePt.obj = p_InfoStrPt;
-                    m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                    break Out;
-                }
-
-                if (mTalkNetwork.m_TcpClntSoktPt.SetKeepAlive(1, 1, 1, 5, 0, m_ErrInfoVstrPt) != 0) {
-                    String p_InfoStrPt = "设置本端TCP协议客户端套接字的保活机制失败。原因：" + m_ErrInfoVstrPt.GetStr();
-                    if (m_IsPrintLogcat != 0) Log.e(m_CurClsNameStrPt, p_InfoStrPt);
-                    Message p_MessagePt = new Message();
-                    p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                    p_MessagePt.obj = p_InfoStrPt;
-                    m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                    break Out;
-                }
-            } else //如果要使用UDP协议。
+            while (true) //循环接受远端高级UDP协议套接字的连接。
             {
-                mTalkNetwork.m_AudpSoktPt = new AudpSokt();
-                mTalkNetwork.m_AudpCnctIdx = new HTLong();
+                if (mTalkNetwork.m_AudpSoktPt.Acpt(mTalkNetwork.m_AudpCnctIdx, null, p_RmtNodeAddrPt, p_RmtNodePortPt, (short) 1, m_ErrInfoVstrPt) == 0) {
+                    if (mTalkNetwork.m_AudpCnctIdx.m_Val != -1) //如果用本端高级UDP协议套接字接受远端高级UDP协议套接字的连接成功。
+                    {
+                        String p_InfoStrPt = "用本端高级UDP协议套接字接受远端高级UDP协议套接字[" + p_RmtNodeAddrPt.m_Val + ":" + p_RmtNodePortPt.m_Val + "]的连接成功。";
+                        toSendMessage1(p_InfoStrPt);
+                        break;
+                    } //如果用本端高级UDP协议套接字接受远端高级UDP协议套接字的连接超时，就重新接受。
+                } else {
+                    String p_InfoStrPt = "用本端高级UDP协议套接字接受远端高级UDP协议套接字的连接失败。原因：" + m_ErrInfoVstrPt.GetStr();
+                    toSendMessage(p_InfoStrPt);
+                    return -1;
+                }
 
-                if (mTalkNetwork.m_IsCreateSrvrOrClnt == 1) //如果是创建本端高级UDP协议套接字接受远端高级UDP协议套接字的连接。
+                if (m_ReadyExitCnt != 0) //如果本线程接收到退出请求。
                 {
-                    if (mTalkNetwork.m_AudpSoktPt.Init(4, mTalkNetwork.m_IPAddrStrPt, mTalkNetwork.m_PortStrPt, (short) 1, (short) 5000, m_ErrInfoVstrPt) == 0) //如果初始化本端高级UDP协议套接字成功。
-                    {
-                        if (mTalkNetwork.m_AudpSoktPt.GetLclAddr(null, p_LclNodeAddrPt, p_LclNodePortPt, m_ErrInfoVstrPt) != 0) //如果获取本端高级UDP协议套接字绑定的本地节点地址和端口失败。
-                        {
-                            String p_InfoStrPt = "获取本端高级UDP协议套接字绑定的本地节点地址和端口失败。原因：" + m_ErrInfoVstrPt.GetStr();
-                            if (m_IsPrintLogcat != 0) Log.e(m_CurClsNameStrPt, p_InfoStrPt);
-                            Message p_MessagePt = new Message();
-                            p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                            p_MessagePt.obj = p_InfoStrPt;
-                            m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                            break Out;
-                        }
+                    if (m_IsPrintLogcat != 0)
+                        Log.i(m_CurClsNameStrPt, "本线程接收到退出请求，开始准备退出。");
+                    return -1;
+                }
+            }
+        } else if (mTalkNetwork.m_IsCreateSrvrOrClnt == 0) //如果是创建本端高级UDP协议套接字连接远端高级UDP协议套接字。--客户端
+        {
+            //Ping一下远程节点地址，这样可以快速获取ARP条目。
+            try {
+                Runtime.getRuntime().exec("ping -c 1 -w 1 " + mTalkNetwork.m_IPAddrStrPt);
+            } catch (Exception ignored) {
+            }
 
-                        String p_InfoStrPt = "初始化本端高级UDP协议套接字[" + p_LclNodeAddrPt.m_Val + ":" + p_LclNodePortPt.m_Val + "]成功。";
-                        if (m_IsPrintLogcat != 0) Log.i(m_CurClsNameStrPt, p_InfoStrPt);
-                        Message p_MessagePt = new Message();
-                        p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                        p_MessagePt.obj = p_InfoStrPt;
-                        m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                    } else //如果初始化本端高级UDP协议套接字失败。
-                    {
-                        String p_InfoStrPt = "初始化本端高级UDP协议套接字[" + mTalkNetwork.m_IPAddrStrPt + ":" + mTalkNetwork.m_PortStrPt + "]失败。原因：" + m_ErrInfoVstrPt.GetStr();
-                        if (m_IsPrintLogcat != 0) Log.e(m_CurClsNameStrPt, p_InfoStrPt);
-                        Message p_MessagePt = new Message();
-                        p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                        p_MessagePt.obj = p_InfoStrPt;
-                        m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                        break Out;
-                    }
-
-                    while (true) //循环接受远端高级UDP协议套接字的连接。
-                    {
-                        if (mTalkNetwork.m_AudpSoktPt.Acpt(mTalkNetwork.m_AudpCnctIdx, null, p_RmtNodeAddrPt, p_RmtNodePortPt, (short) 1, m_ErrInfoVstrPt) == 0) {
-                            if (mTalkNetwork.m_AudpCnctIdx.m_Val != -1) //如果用本端高级UDP协议套接字接受远端高级UDP协议套接字的连接成功。
-                            {
-                                String p_InfoStrPt = "用本端高级UDP协议套接字接受远端高级UDP协议套接字[" + p_RmtNodeAddrPt.m_Val + ":" + p_RmtNodePortPt.m_Val + "]的连接成功。";
-                                if (m_IsPrintLogcat != 0) Log.i(m_CurClsNameStrPt, p_InfoStrPt);
-                                Message p_MessagePt = new Message();
-                                p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                                p_MessagePt.obj = p_InfoStrPt;
-                                m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                                break;
-                            } //如果用本端高级UDP协议套接字接受远端高级UDP协议套接字的连接超时，就重新接受。
-                        } else {
-                            String p_InfoStrPt = "用本端高级UDP协议套接字接受远端高级UDP协议套接字的连接失败。原因：" + m_ErrInfoVstrPt.GetStr();
-                            if (m_IsPrintLogcat != 0) Log.e(m_CurClsNameStrPt, p_InfoStrPt);
-                            Message p_MessagePt = new Message();
-                            p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                            p_MessagePt.obj = p_InfoStrPt;
-                            m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                            break Out;
-                        }
-
-                        if (m_ReadyExitCnt != 0) //如果本线程接收到退出请求。
-                        {
-                            if (m_IsPrintLogcat != 0)
-                                Log.i(m_CurClsNameStrPt, "本线程接收到退出请求，开始准备退出。");
-                            break Out;
-                        }
-                    }
-                } else if (mTalkNetwork.m_IsCreateSrvrOrClnt == 0) //如果是创建本端高级UDP协议套接字连接远端高级UDP协议套接字。
+            if (mTalkNetwork.m_AudpSoktPt.Init(4, null, null, (short) 0, (short) 5000, m_ErrInfoVstrPt) == 0) //如果初始化本端高级UDP协议套接字成功。
+            {
+                if (mTalkNetwork.m_AudpSoktPt.GetLclAddr(null, p_LclNodeAddrPt, p_LclNodePortPt, m_ErrInfoVstrPt) != 0) //如果获取本端高级UDP协议套接字绑定的本地节点地址和端口失败。
                 {
-                    //Ping一下远程节点地址，这样可以快速获取ARP条目。
-                    try {
-                        Runtime.getRuntime().exec("ping -c 1 -w 1 " + mTalkNetwork.m_IPAddrStrPt);
-                    } catch (Exception ignored) {
+                    String p_InfoStrPt = "获取本端高级UDP协议套接字绑定的本地节点地址和端口失败。原因：" + m_ErrInfoVstrPt.GetStr();
+                    toSendMessage(p_InfoStrPt);
+                    return -1;
+                }
+
+                String p_InfoStrPt = "初始化本端高级UDP协议套接字[" + p_LclNodeAddrPt.m_Val + ":" + p_LclNodePortPt.m_Val + "]成功。";
+                toSendMessage1(p_InfoStrPt);
+            } else //如果初始化本端高级UDP协议套接字失败。
+            {
+                String p_InfoStrPt = "初始化本端高级UDP协议套接字[" + mTalkNetwork.m_IPAddrStrPt + ":" + mTalkNetwork.m_PortStrPt + "]失败。原因：" + m_ErrInfoVstrPt.GetStr();
+                toSendMessage(p_InfoStrPt);
+                return -1;
+            }
+
+            int p_CurCnctTimes = 1;
+            while (true) //循环连接远端高级UDP协议服务端套接字。
+            {
+                //连接远端。
+                {
+                    {
+                        String p_InfoStrPt = "开始第 " + p_CurCnctTimes + " 次连接。";
+                        toSendMessage1(p_InfoStrPt);
                     }
 
-                    if (mTalkNetwork.m_AudpSoktPt.Init(4, null, null, (short) 0, (short) 5000, m_ErrInfoVstrPt) == 0) //如果初始化本端高级UDP协议套接字成功。
+                    if (mTalkNetwork.m_AudpSoktPt.Cnct(4, mTalkNetwork.m_IPAddrStrPt, mTalkNetwork.m_PortStrPt, mTalkNetwork.m_AudpCnctIdx, m_ErrInfoVstrPt) == 0) //如果连接远端高级UDP协议套接字成功。
                     {
-                        if (mTalkNetwork.m_AudpSoktPt.GetLclAddr(null, p_LclNodeAddrPt, p_LclNodePortPt, m_ErrInfoVstrPt) != 0) //如果获取本端高级UDP协议套接字绑定的本地节点地址和端口失败。
+                        HTInt p_AudpCnctSts = new HTInt();
+
+                        if (mTalkNetwork.m_AudpSoktPt.WaitCnct(mTalkNetwork.m_AudpCnctIdx.m_Val, (short) 5000, p_AudpCnctSts, m_ErrInfoVstrPt) == 0) //如果等待本端高级UDP协议套接字连接远端是否成功成功。
                         {
-                            String p_InfoStrPt = "获取本端高级UDP协议套接字绑定的本地节点地址和端口失败。原因：" + m_ErrInfoVstrPt.GetStr();
-                            if (m_IsPrintLogcat != 0) Log.e(m_CurClsNameStrPt, p_InfoStrPt);
-                            Message p_MessagePt = new Message();
-                            p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                            p_MessagePt.obj = p_InfoStrPt;
-                            m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                            break Out;
-                        }
-
-                        String p_InfoStrPt = "初始化本端高级UDP协议套接字[" + p_LclNodeAddrPt.m_Val + ":" + p_LclNodePortPt.m_Val + "]成功。";
-                        if (m_IsPrintLogcat != 0) Log.i(m_CurClsNameStrPt, p_InfoStrPt);
-                        Message p_MessagePt = new Message();
-                        p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                        p_MessagePt.obj = p_InfoStrPt;
-                        m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                    } else //如果初始化本端高级UDP协议套接字失败。
-                    {
-                        String p_InfoStrPt = "初始化本端高级UDP协议套接字[" + mTalkNetwork.m_IPAddrStrPt + ":" + mTalkNetwork.m_PortStrPt + "]失败。原因：" + m_ErrInfoVstrPt.GetStr();
-                        if (m_IsPrintLogcat != 0) Log.e(m_CurClsNameStrPt, p_InfoStrPt);
-                        Message p_MessagePt = new Message();
-                        p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                        p_MessagePt.obj = p_InfoStrPt;
-                        m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                        break Out;
-                    }
-
-                    int p_CurCnctTimes = 1;
-                    while (true) //循环连接远端高级UDP协议服务端套接字。
-                    {
-                        //连接远端。
-                        {
+                            if (p_AudpCnctSts.m_Val == AudpSokt.AudpCnctStsCnct) //如果连接成功。
                             {
-                                String p_InfoStrPt = "开始第 " + p_CurCnctTimes + " 次连接。";
-                                if (m_IsPrintLogcat != 0) Log.i(m_CurClsNameStrPt, p_InfoStrPt);
-                                Message p_MessagePt = new Message();
-                                p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                                p_MessagePt.obj = p_InfoStrPt;
-                                m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                            }
-
-                            if (mTalkNetwork.m_AudpSoktPt.Cnct(4, mTalkNetwork.m_IPAddrStrPt, mTalkNetwork.m_PortStrPt, mTalkNetwork.m_AudpCnctIdx, m_ErrInfoVstrPt) == 0) //如果连接远端高级UDP协议套接字成功。
-                            {
-                                HTInt p_AudpCnctSts = new HTInt();
-
-                                if (mTalkNetwork.m_AudpSoktPt.WaitCnct(mTalkNetwork.m_AudpCnctIdx.m_Val, (short) 5000, p_AudpCnctSts, m_ErrInfoVstrPt) == 0) //如果等待本端高级UDP协议套接字连接远端是否成功成功。
-                                {
-                                    if (p_AudpCnctSts.m_Val == AudpSokt.AudpCnctStsCnct) //如果连接成功。
-                                    {
-                                        if (mTalkNetwork.m_AudpSoktPt.GetRmtAddr(mTalkNetwork.m_AudpCnctIdx.m_Val, null, p_RmtNodeAddrPt, p_RmtNodePortPt, m_ErrInfoVstrPt) != 0) {
-                                            String p_InfoStrPt = "获取本端高级UDP协议客户端套接字连接的远端高级UDP协议客户端套接字绑定的远程节点地址和端口失败。原因：" + m_ErrInfoVstrPt.GetStr();
-                                            if (m_IsPrintLogcat != 0)
-                                                Log.e(m_CurClsNameStrPt, p_InfoStrPt);
-                                            Message p_MessagePt = new Message();
-                                            p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                                            p_MessagePt.obj = p_InfoStrPt;
-                                            m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                                            break Out;
-                                        }
-
-                                        String p_InfoStrPt = "用本端高级UDP协议套接字连接远端高级UDP协议套接字[" + p_RmtNodeAddrPt.m_Val + ":" + p_RmtNodePortPt.m_Val + "]成功。";
-                                        if (m_IsPrintLogcat != 0)
-                                            Log.i(m_CurClsNameStrPt, p_InfoStrPt);
-                                        Message p_MessagePt = new Message();
-                                        p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                                        p_MessagePt.obj = p_InfoStrPt;
-                                        m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                                        break; //跳出重连。
-                                    } else //如果连接失败。
-                                    {
-                                        if (p_AudpCnctSts.m_Val == AudpSokt.AudpCnctStsTmot) //如果连接超时。
-                                        {
-                                            String p_InfoStrPt = "用本端高级UDP协议套接字连接远端高级UDP协议套接字[" + mTalkNetwork.m_IPAddrStrPt + ":" + mTalkNetwork.m_PortStrPt + "]失败。原因：连接超时。";
-                                            if (m_IsPrintLogcat != 0)
-                                                Log.e(m_CurClsNameStrPt, p_InfoStrPt);
-                                            Message p_MessagePt = new Message();
-                                            p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                                            p_MessagePt.obj = p_InfoStrPt;
-                                            m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                                        } else //如果连接断开。
-                                        {
-                                            String p_InfoStrPt = "用本端高级UDP协议套接字连接远端高级UDP协议套接字[" + mTalkNetwork.m_IPAddrStrPt + ":" + mTalkNetwork.m_PortStrPt + "]失败。原因：连接断开。";
-                                            if (m_IsPrintLogcat != 0)
-                                                Log.e(m_CurClsNameStrPt, p_InfoStrPt);
-                                            Message p_MessagePt = new Message();
-                                            p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                                            p_MessagePt.obj = p_InfoStrPt;
-                                            m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                                        }
-                                    }
+                                if (mTalkNetwork.m_AudpSoktPt.GetRmtAddr(mTalkNetwork.m_AudpCnctIdx.m_Val, null, p_RmtNodeAddrPt, p_RmtNodePortPt, m_ErrInfoVstrPt) != 0) {
+                                    String p_InfoStrPt = "获取本端高级UDP协议客户端套接字连接的远端高级UDP协议客户端套接字绑定的远程节点地址和端口失败。原因：" + m_ErrInfoVstrPt.GetStr();
+                                    toSendMessage(p_InfoStrPt);
+                                    return -1;
                                 }
 
-                                mTalkNetwork.m_AudpSoktPt.ClosCnct(mTalkNetwork.m_AudpCnctIdx.m_Val, m_ErrInfoVstrPt); //关闭连接，等待重连。
-                            } else {
-                                String p_InfoStrPt = "用本端高级UDP协议套接字连接远端高级UDP协议套接字[" + mTalkNetwork.m_IPAddrStrPt + ":" + mTalkNetwork.m_PortStrPt + "]失败。原因：" + m_ErrInfoVstrPt.GetStr();
-                                if (m_IsPrintLogcat != 0) Log.e(m_CurClsNameStrPt, p_InfoStrPt);
-                                Message p_MessagePt = new Message();
-                                p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                                p_MessagePt.obj = p_InfoStrPt;
-                                m_MainActivityHandlerPt.sendMessage(p_MessagePt);
+                                String p_InfoStrPt = "用本端高级UDP协议套接字连接远端高级UDP协议套接字[" + p_RmtNodeAddrPt.m_Val + ":" + p_RmtNodePortPt.m_Val + "]成功。";
+                                toSendMessage1(p_InfoStrPt);
+                                break; //跳出重连。
+                            } else //如果连接失败。
+                            {
+                                if (p_AudpCnctSts.m_Val == AudpSokt.AudpCnctStsTmot) //如果连接超时。
+                                {
+                                    String p_InfoStrPt = "用本端高级UDP协议套接字连接远端高级UDP协议套接字[" + mTalkNetwork.m_IPAddrStrPt + ":" + mTalkNetwork.m_PortStrPt + "]失败。原因：连接超时。";
+                                    toSendMessage(p_InfoStrPt);
+                                } else //如果连接断开。
+                                {
+                                    String p_InfoStrPt = "用本端高级UDP协议套接字连接远端高级UDP协议套接字[" + mTalkNetwork.m_IPAddrStrPt + ":" + mTalkNetwork.m_PortStrPt + "]失败。原因：连接断开。";
+                                    toSendMessage(p_InfoStrPt);
+                                }
                             }
                         }
 
-                        p_CurCnctTimes++;
-                        if (p_CurCnctTimes > mTalkNetwork.m_MaxCnctTimes) {
-                            String p_InfoStrPt = "达到最大连接次数，中断连接。";
-                            if (m_IsPrintLogcat != 0) Log.e(m_CurClsNameStrPt, p_InfoStrPt);
-                            Message p_MessagePt = new Message();
-                            p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                            p_MessagePt.obj = p_InfoStrPt;
-                            m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                            break Out;
-                        }
-
-                        if (m_ReadyExitCnt != 0) //如果本线程接收到退出请求。
-                        {
-                            if (m_IsPrintLogcat != 0)
-                                Log.i(m_CurClsNameStrPt, "本线程接收到退出请求，开始准备退出。");
-                            break Out;
-                        }
+                        mTalkNetwork.m_AudpSoktPt.ClosCnct(mTalkNetwork.m_AudpCnctIdx.m_Val, m_ErrInfoVstrPt); //关闭连接，等待重连。
+                    } else {
+                        String p_InfoStrPt = "用本端高级UDP协议套接字连接远端高级UDP协议套接字[" + mTalkNetwork.m_IPAddrStrPt + ":" + mTalkNetwork.m_PortStrPt + "]失败。原因：" + m_ErrInfoVstrPt.GetStr();
+                        toSendMessage(p_InfoStrPt);
                     }
                 }
 
-                if (mTalkNetwork.m_AudpSoktPt.SetSendBufSz(1024 * 1024, m_ErrInfoVstrPt) != 0) {
-                    String p_InfoStrPt = "设置本端高级UDP协议套接字的发送缓冲区大小失败。原因：" + m_ErrInfoVstrPt.GetStr();
-                    if (m_IsPrintLogcat != 0) Log.e(m_CurClsNameStrPt, p_InfoStrPt);
-                    Message p_MessagePt = new Message();
-                    p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                    p_MessagePt.obj = p_InfoStrPt;
-                    m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                    break Out;
+                p_CurCnctTimes++;
+                if (p_CurCnctTimes > mTalkNetwork.m_MaxCnctTimes) {
+                    String p_InfoStrPt = "达到最大连接次数，中断连接。";
+                    toSendMessage(p_InfoStrPt);
+                    return -1;
                 }
 
-                if (mTalkNetwork.m_AudpSoktPt.SetRecvBufSz(1024 * 1024, m_ErrInfoVstrPt) != 0) {
-                    String p_InfoStrPt = "设置本端高级UDP协议套接字的接收缓冲区大小失败。原因：" + m_ErrInfoVstrPt.GetStr();
-                    if (m_IsPrintLogcat != 0) Log.e(m_CurClsNameStrPt, p_InfoStrPt);
-                    Message p_MessagePt = new Message();
-                    p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                    p_MessagePt.obj = p_InfoStrPt;
-                    m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                    break Out;
-                }
-            } //协议连接结束。
-
-            //等待允许连接。
-            if ((mTalkNetwork.m_IsCreateSrvrOrClnt == 1) && (m_IsAutoAllowCnct != 0))
-                m_RqstCnctRslt = 1;
-            else m_RqstCnctRslt = 0;
-            {
-                Message p_MessagePt = new Message();
-                p_MessagePt.what = MainActivityHandler.Msg.RqstCnctDlgInit.ordinal();
-                p_MessagePt.obj = p_RmtNodeAddrPt.m_Val;
-                m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-            } //向主界面发送显示请求连接对话框的消息。
-            WaitAllowCnct:
-            while (true) {
-                if (mTalkNetwork.m_IsCreateSrvrOrClnt == 1) //如果是服务端。
+                if (m_ReadyExitCnt != 0) //如果本线程接收到退出请求。
                 {
-                    if (m_RqstCnctRslt == 1) //如果允许连接。
+                    if (m_IsPrintLogcat != 0)
+                        Log.i(m_CurClsNameStrPt, "本线程接收到退出请求，开始准备退出。");
+                    return -1;
+                }
+            }
+        }
+
+        if (mTalkNetwork.m_AudpSoktPt.SetSendBufSz(1024 * 1024, m_ErrInfoVstrPt) != 0) {
+            String p_InfoStrPt = "设置本端高级UDP协议套接字的发送缓冲区大小失败。原因：" + m_ErrInfoVstrPt.GetStr();
+            toSendMessage(p_InfoStrPt);
+            return -1;
+        }
+
+        if (mTalkNetwork.m_AudpSoktPt.SetRecvBufSz(1024 * 1024, m_ErrInfoVstrPt) != 0) {
+            String p_InfoStrPt = "设置本端高级UDP协议套接字的接收缓冲区大小失败。原因：" + m_ErrInfoVstrPt.GetStr();
+            toSendMessage(p_InfoStrPt);
+            return -1;
+        }
+        //协议连接结束。
+
+        //等待允许连接。
+        if ((mTalkNetwork.m_IsCreateSrvrOrClnt == 1) && (m_IsAutoAllowCnct != 0))
+            m_RqstCnctRslt = 1;
+        else m_RqstCnctRslt = 0;
+        {
+            toSendMessage3(p_RmtNodeAddrPt);
+        } //向主界面发送显示请求连接对话框的消息。
+        WaitAllowCnct:
+        while (true) {
+            if (mTalkNetwork.m_IsCreateSrvrOrClnt == 1) //如果是服务端。
+            {
+                if (m_RqstCnctRslt == 1) //如果允许连接。
+                {
+                    m_TmpBytePt[0] = (byte) PktTyp.AllowCnct.ordinal(); //设置允许连接包。
+                    if (((mTalkNetwork.m_UseWhatXfrPrtcl == 0) && (mTalkNetwork.m_TcpClntSoktPt.SendApkt(m_TmpBytePt, 1, (short) 0, 1, 0, m_ErrInfoVstrPt) == 0)) ||
+                            ((mTalkNetwork.m_UseWhatXfrPrtcl == 1) && (mTalkNetwork.m_AudpSoktPt.SendApkt(mTalkNetwork.m_AudpCnctIdx.m_Val, m_TmpBytePt, 1, 10, m_ErrInfoVstrPt) == 0))) {
+                        {
+                            toSendMessage2();
+                        } //向主界面发送毁请求连接对话框的消息。
+
+                        String p_InfoStrPt = "发送一个允许连接包成功。";
+                        toSendMessage1(p_InfoStrPt);
+                        if (m_IsShowToast != 0)
+                            m_ShowToastActivityPt.runOnUiThread(new Runnable() {
+                                public void run() {
+                                    Toast.makeText(m_ShowToastActivityPt, p_InfoStrPt, Toast.LENGTH_LONG).show();
+                                }
+                            });
+                        break WaitAllowCnct;
+                    } else {
+                        {
+                            toSendMessage2();
+                        } //向主界面发送毁请求连接对话框的消息。
+
+                        String p_InfoStrPt = "发送一个允许连接包失败。原因：" + m_ErrInfoVstrPt.GetStr();
+                        toSendMessage(p_InfoStrPt);
+                        return -1;
+                    }
+                } else if (m_RqstCnctRslt == 2) //如果拒绝连接。
+                {
+                    m_TmpBytePt[0] = (byte) PktTyp.RefuseCnct.ordinal(); //设置拒绝连接包。
+                    if (((mTalkNetwork.m_UseWhatXfrPrtcl == 0) && (mTalkNetwork.m_TcpClntSoktPt.SendApkt(m_TmpBytePt, 1, (short) 0, 1, 0, m_ErrInfoVstrPt) == 0)) ||
+                            ((mTalkNetwork.m_UseWhatXfrPrtcl == 1) && (mTalkNetwork.m_AudpSoktPt.SendApkt(mTalkNetwork.m_AudpCnctIdx.m_Val, m_TmpBytePt, 1, 10, m_ErrInfoVstrPt) == 0))) {
+                        {
+                            toSendMessage2();
+                        } //向主界面发送毁请求连接对话框的消息。
+
+                        String p_InfoStrPt = "发送一个拒绝连接包成功。";
+                        toSendMessage1(p_InfoStrPt);
+                        if (m_IsShowToast != 0)
+                            m_ShowToastActivityPt.runOnUiThread(new Runnable() {
+                                public void run() {
+                                    Toast.makeText(m_ShowToastActivityPt, p_InfoStrPt, Toast.LENGTH_LONG).show();
+                                }
+                            });
+                        return -1;
+                    } else {
+                        {
+                            toSendMessage2();
+                        } //向主界面发送毁请求连接对话框的消息。
+
+                        String p_InfoStrPt = "发送一个拒绝连接包失败。原因：" + m_ErrInfoVstrPt.GetStr();
+                        toSendMessage(p_InfoStrPt);
+                        return -1;
+                    }
+                }
+            } else //如果是客户端。
+            {
+                if (m_RqstCnctRslt == 2) //如果中断等待。
+                {
+                    m_TmpBytePt[0] = (byte) PktTyp.RefuseCnct.ordinal(); //设置拒绝连接包。
+                    if (((mTalkNetwork.m_UseWhatXfrPrtcl == 0) && (mTalkNetwork.m_TcpClntSoktPt.SendApkt(m_TmpBytePt, 1, (short) 0, 1, 0, m_ErrInfoVstrPt) == 0)) ||
+                            ((mTalkNetwork.m_UseWhatXfrPrtcl == 1) && (mTalkNetwork.m_AudpSoktPt.SendApkt(mTalkNetwork.m_AudpCnctIdx.m_Val, m_TmpBytePt, 1, 10, m_ErrInfoVstrPt) == 0))) {
+                        {
+                            toSendMessage2();
+                        } //向主界面发送毁请求连接对话框的消息。
+
+                        String p_InfoStrPt = "发送一个拒绝连接包成功。";
+                        toSendMessage1(p_InfoStrPt);
+                        if (m_IsShowToast != 0)
+                            m_ShowToastActivityPt.runOnUiThread(new Runnable() {
+                                public void run() {
+                                    Toast.makeText(m_ShowToastActivityPt, p_InfoStrPt, Toast.LENGTH_LONG).show();
+                                }
+                            });
+                        return -1;
+                    } else {
+                        {
+                            toSendMessage2();
+                        } //向主界面发送毁请求连接对话框的消息。
+
+                        String p_InfoStrPt = "发送一个拒绝连接包失败。原因：" + m_ErrInfoVstrPt.GetStr();
+                        toSendMessage(p_InfoStrPt);
+                        return -1;
+                    }
+                }
+            }
+
+            //接收一个远端发送的数据包。
+            if (((mTalkNetwork.m_UseWhatXfrPrtcl == 0) && (mTalkNetwork.m_TcpClntSoktPt.RecvApkt(m_TmpBytePt, m_TmpBytePt.length, m_TmpHTLongPt, (short) 1, 0, m_ErrInfoVstrPt) == 0)) ||
+                    ((mTalkNetwork.m_UseWhatXfrPrtcl == 1) && (mTalkNetwork.m_AudpSoktPt.RecvApkt(mTalkNetwork.m_AudpCnctIdx.m_Val, m_TmpBytePt, m_TmpBytePt.length, m_TmpHTLongPt, (short) 1, m_ErrInfoVstrPt) == 0))) {
+                if (m_TmpHTLongPt.m_Val != -1) //如果用本端套接字接收一个连接的远端套接字发送的数据包成功。
+                {
+                    if ((m_TmpHTLongPt.m_Val == 1) && (m_TmpBytePt[0] == (byte) PktTyp.AllowCnct.ordinal())) //如果是允许连接包。
                     {
-                        m_TmpBytePt[0] = (byte) PktTyp.AllowCnct.ordinal(); //设置允许连接包。
-                        if (((mTalkNetwork.m_UseWhatXfrPrtcl == 0) && (mTalkNetwork.m_TcpClntSoktPt.SendApkt(m_TmpBytePt, 1, (short) 0, 1, 0, m_ErrInfoVstrPt) == 0)) ||
-                                ((mTalkNetwork.m_UseWhatXfrPrtcl == 1) && (mTalkNetwork.m_AudpSoktPt.SendApkt(mTalkNetwork.m_AudpCnctIdx.m_Val, m_TmpBytePt, 1, 10, m_ErrInfoVstrPt) == 0))) {
+                        if (mTalkNetwork.m_IsCreateSrvrOrClnt == 0) //如果是客户端。
+                        {
+                            m_RqstCnctRslt = 1;
+
                             {
-                                Message p_MessagePt = new Message();
-                                p_MessagePt.what = MainActivityHandler.Msg.RqstCnctDlgDstoy.ordinal();
-                                m_MainActivityHandlerPt.sendMessage(p_MessagePt);
+                                toSendMessage2();
                             } //向主界面发送毁请求连接对话框的消息。
 
-                            String p_InfoStrPt = "发送一个允许连接包成功。";
-                            if (m_IsPrintLogcat != 0) Log.i(m_CurClsNameStrPt, p_InfoStrPt);
-                            Message p_MessagePt = new Message();
-                            p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                            p_MessagePt.obj = p_InfoStrPt;
-                            m_MainActivityHandlerPt.sendMessage(p_MessagePt);
+                            String p_InfoStrPt = "接收到一个允许连接包。";
+                            toSendMessage1(p_InfoStrPt);
                             if (m_IsShowToast != 0)
                                 m_ShowToastActivityPt.runOnUiThread(new Runnable() {
                                     public void run() {
@@ -607,259 +412,150 @@ public class MyMediaPocsThrd extends MediaPocsThrd {
                                     }
                                 });
                             break WaitAllowCnct;
-                        } else {
-                            {
-                                Message p_MessagePt = new Message();
-                                p_MessagePt.what = MainActivityHandler.Msg.RqstCnctDlgDstoy.ordinal();
-                                m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                            } //向主界面发送毁请求连接对话框的消息。
-
-                            String p_InfoStrPt = "发送一个允许连接包失败。原因：" + m_ErrInfoVstrPt.GetStr();
-                            if (m_IsPrintLogcat != 0) Log.e(m_CurClsNameStrPt, p_InfoStrPt);
-                            Message p_MessagePt = new Message();
-                            p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                            p_MessagePt.obj = p_InfoStrPt;
-                            m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                            break Out;
-                        }
-                    } else if (m_RqstCnctRslt == 2) //如果拒绝连接。
+                        } //如果是服务端，就重新接收。
+                    } else if ((m_TmpHTLongPt.m_Val == 1) && (m_TmpBytePt[0] == (byte) PktTyp.RefuseCnct.ordinal())) //如果是拒绝连接包。
                     {
-                        m_TmpBytePt[0] = (byte) PktTyp.RefuseCnct.ordinal(); //设置拒绝连接包。
-                        if (((mTalkNetwork.m_UseWhatXfrPrtcl == 0) && (mTalkNetwork.m_TcpClntSoktPt.SendApkt(m_TmpBytePt, 1, (short) 0, 1, 0, m_ErrInfoVstrPt) == 0)) ||
-                                ((mTalkNetwork.m_UseWhatXfrPrtcl == 1) && (mTalkNetwork.m_AudpSoktPt.SendApkt(mTalkNetwork.m_AudpCnctIdx.m_Val, m_TmpBytePt, 1, 10, m_ErrInfoVstrPt) == 0))) {
-                            {
-                                Message p_MessagePt = new Message();
-                                p_MessagePt.what = MainActivityHandler.Msg.RqstCnctDlgDstoy.ordinal();
-                                m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                            } //向主界面发送毁请求连接对话框的消息。
+                        m_RqstCnctRslt = 2;
 
-                            String p_InfoStrPt = "发送一个拒绝连接包成功。";
-                            if (m_IsPrintLogcat != 0) Log.i(m_CurClsNameStrPt, p_InfoStrPt);
-                            Message p_MessagePt = new Message();
-                            p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                            p_MessagePt.obj = p_InfoStrPt;
-                            m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                            if (m_IsShowToast != 0)
-                                m_ShowToastActivityPt.runOnUiThread(new Runnable() {
-                                    public void run() {
-                                        Toast.makeText(m_ShowToastActivityPt, p_InfoStrPt, Toast.LENGTH_LONG).show();
-                                    }
-                                });
-                            break Out;
-                        } else {
-                            {
-                                Message p_MessagePt = new Message();
-                                p_MessagePt.what = MainActivityHandler.Msg.RqstCnctDlgDstoy.ordinal();
-                                m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                            } //向主界面发送毁请求连接对话框的消息。
-
-                            String p_InfoStrPt = "发送一个拒绝连接包失败。原因：" + m_ErrInfoVstrPt.GetStr();
-                            if (m_IsPrintLogcat != 0) Log.e(m_CurClsNameStrPt, p_InfoStrPt);
-                            Message p_MessagePt = new Message();
-                            p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                            p_MessagePt.obj = p_InfoStrPt;
-                            m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                            break Out;
-                        }
-                    }
-                } else //如果是客户端。
-                {
-                    if (m_RqstCnctRslt == 2) //如果中断等待。
-                    {
-                        m_TmpBytePt[0] = (byte) PktTyp.RefuseCnct.ordinal(); //设置拒绝连接包。
-                        if (((mTalkNetwork.m_UseWhatXfrPrtcl == 0) && (mTalkNetwork.m_TcpClntSoktPt.SendApkt(m_TmpBytePt, 1, (short) 0, 1, 0, m_ErrInfoVstrPt) == 0)) ||
-                                ((mTalkNetwork.m_UseWhatXfrPrtcl == 1) && (mTalkNetwork.m_AudpSoktPt.SendApkt(mTalkNetwork.m_AudpCnctIdx.m_Val, m_TmpBytePt, 1, 10, m_ErrInfoVstrPt) == 0))) {
-                            {
-                                Message p_MessagePt = new Message();
-                                p_MessagePt.what = MainActivityHandler.Msg.RqstCnctDlgDstoy.ordinal();
-                                m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                            } //向主界面发送毁请求连接对话框的消息。
-
-                            String p_InfoStrPt = "发送一个拒绝连接包成功。";
-                            if (m_IsPrintLogcat != 0) Log.i(m_CurClsNameStrPt, p_InfoStrPt);
-                            Message p_MessagePt = new Message();
-                            p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                            p_MessagePt.obj = p_InfoStrPt;
-                            m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                            if (m_IsShowToast != 0)
-                                m_ShowToastActivityPt.runOnUiThread(new Runnable() {
-                                    public void run() {
-                                        Toast.makeText(m_ShowToastActivityPt, p_InfoStrPt, Toast.LENGTH_LONG).show();
-                                    }
-                                });
-                            break Out;
-                        } else {
-                            {
-                                Message p_MessagePt = new Message();
-                                p_MessagePt.what = MainActivityHandler.Msg.RqstCnctDlgDstoy.ordinal();
-                                m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                            } //向主界面发送毁请求连接对话框的消息。
-
-                            String p_InfoStrPt = "发送一个拒绝连接包失败。原因：" + m_ErrInfoVstrPt.GetStr();
-                            if (m_IsPrintLogcat != 0) Log.e(m_CurClsNameStrPt, p_InfoStrPt);
-                            Message p_MessagePt = new Message();
-                            p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                            p_MessagePt.obj = p_InfoStrPt;
-                            m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                            break Out;
-                        }
-                    }
-                }
-
-                //接收一个远端发送的数据包。
-                if (((mTalkNetwork.m_UseWhatXfrPrtcl == 0) && (mTalkNetwork.m_TcpClntSoktPt.RecvApkt(m_TmpBytePt, m_TmpBytePt.length, m_TmpHTLongPt, (short) 1, 0, m_ErrInfoVstrPt) == 0)) ||
-                        ((mTalkNetwork.m_UseWhatXfrPrtcl == 1) && (mTalkNetwork.m_AudpSoktPt.RecvApkt(mTalkNetwork.m_AudpCnctIdx.m_Val, m_TmpBytePt, m_TmpBytePt.length, m_TmpHTLongPt, (short) 1, m_ErrInfoVstrPt) == 0))) {
-                    if (m_TmpHTLongPt.m_Val != -1) //如果用本端套接字接收一个连接的远端套接字发送的数据包成功。
-                    {
-                        if ((m_TmpHTLongPt.m_Val == 1) && (m_TmpBytePt[0] == (byte) PktTyp.AllowCnct.ordinal())) //如果是允许连接包。
                         {
-                            if (mTalkNetwork.m_IsCreateSrvrOrClnt == 0) //如果是客户端。
-                            {
-                                m_RqstCnctRslt = 1;
+                            toSendMessage2();
+                        } //向主界面发送毁请求连接对话框的消息。
 
-                                {
-                                    Message p_MessagePt = new Message();
-                                    p_MessagePt.what = MainActivityHandler.Msg.RqstCnctDlgDstoy.ordinal();
-                                    m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                                } //向主界面发送毁请求连接对话框的消息。
-
-                                String p_InfoStrPt = "接收到一个允许连接包。";
-                                if (m_IsPrintLogcat != 0) Log.i(m_CurClsNameStrPt, p_InfoStrPt);
-                                Message p_MessagePt = new Message();
-                                p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                                p_MessagePt.obj = p_InfoStrPt;
-                                m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                                if (m_IsShowToast != 0)
-                                    m_ShowToastActivityPt.runOnUiThread(new Runnable() {
-                                        public void run() {
-                                            Toast.makeText(m_ShowToastActivityPt, p_InfoStrPt, Toast.LENGTH_LONG).show();
-                                        }
-                                    });
-                                break WaitAllowCnct;
-                            } //如果是服务端，就重新接收。
-                        } else if ((m_TmpHTLongPt.m_Val == 1) && (m_TmpBytePt[0] == (byte) PktTyp.RefuseCnct.ordinal())) //如果是拒绝连接包。
-                        {
-                            m_RqstCnctRslt = 2;
-
-                            {
-                                Message p_MessagePt = new Message();
-                                p_MessagePt.what = MainActivityHandler.Msg.RqstCnctDlgDstoy.ordinal();
-                                m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                            } //向主界面发送毁请求连接对话框的消息。
-
-                            String p_InfoStrPt = "接收到一个拒绝连接包。";
-                            if (m_IsPrintLogcat != 0) Log.i(m_CurClsNameStrPt, p_InfoStrPt);
-                            Message p_MessagePt = new Message();
-                            p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                            p_MessagePt.obj = p_InfoStrPt;
-                            m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                            if (m_IsShowToast != 0)
-                                m_ShowToastActivityPt.runOnUiThread(new Runnable() {
-                                    public void run() {
-                                        Toast.makeText(m_ShowToastActivityPt, p_InfoStrPt, Toast.LENGTH_LONG).show();
-                                    }
-                                });
-                            break Out;
-                        } //如果是其他包，就重新接收。
-                    } //如果用本端套接字接收一个连接的远端套接字发送的数据包超时，就重新接收。
-                } else //如果用本端套接字接收一个连接的远端套接字发送的数据包失败。
-                {
-                    {
-                        Message p_MessagePt = new Message();
-                        p_MessagePt.what = MainActivityHandler.Msg.RqstCnctDlgDstoy.ordinal();
-                        m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                    } //向主界面发送销毁请求连接对话框的消息。
-
-                    String p_InfoStrPt = "用本端套接字接收一个连接的远端套接字发送的数据包失败。原因：" + m_ErrInfoVstrPt.GetStr();
-                    if (m_IsPrintLogcat != 0) Log.e(m_CurClsNameStrPt, p_InfoStrPt);
-                    Message p_MessagePt = new Message();
-                    p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                    p_MessagePt.obj = p_InfoStrPt;
-                    m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                    break Out;
-                }
-            } //等待允许连接结束。
-
-            m_LastSendAdoInptFrmIsAct = 0; //设置最后发送的一个音频输入帧为无语音活动。
-            m_LastSendAdoInptFrmTimeStamp = 0 - 1; //设置最后一个发送音频输入帧的时间戳为0的前一个，因为第一次发送音频输入帧时会递增一个步进。
-            m_LastSendVdoInptFrmTimeStamp = 0 - 1; //设置最后一个发送视频输入帧的时间戳为0的前一个，因为第一次发送视频输入帧时会递增一个步进。
-
-            switch (m_UseWhatRecvOtptFrm) //使用什么接收输出帧。
+                        String p_InfoStrPt = "接收到一个拒绝连接包。";
+                        toSendMessage1(p_InfoStrPt);
+                        if (m_IsShowToast != 0)
+                            m_ShowToastActivityPt.runOnUiThread(new Runnable() {
+                                public void run() {
+                                    Toast.makeText(m_ShowToastActivityPt, p_InfoStrPt, Toast.LENGTH_LONG).show();
+                                }
+                            });
+                        return -1;
+                    } //如果是其他包，就重新接收。
+                } //如果用本端套接字接收一个连接的远端套接字发送的数据包超时，就重新接收。
+            } else //如果用本端套接字接收一个连接的远端套接字发送的数据包失败。
             {
-                case 0: //如果要使用链表。
                 {
-                    //初始化接收音频输出帧链表。
-                    m_RecvAdoOtptFrmLnkLstPt = new LinkedList<byte[]>(); //创建接收音频输出帧链表。
-                    if (m_IsPrintLogcat != 0) Log.i(m_CurClsNameStrPt, "初始化接收音频输出帧链表对象成功。");
+                    toSendMessage2();
+                } //向主界面发送销毁请求连接对话框的消息。
 
-                    //初始化接收视频输出帧链表。
-                    m_RecvVdoOtptFrmLnkLstPt = new LinkedList<byte[]>(); //创建接收视频输出帧链表。
-                    if (m_IsPrintLogcat != 0) Log.i(m_CurClsNameStrPt, "初始化接收视频输出帧链表对象成功。");
-                    break;
-                }
-                case 1: //如果要使用自适应抖动缓冲器。
-                {
-                    //初始化音频自适应抖动缓冲器。
-                    m_AAjbPt.m_Pt = new HeavenTao.Ado.AAjb();
-                    if (m_AAjbPt.m_Pt.Init(m_AdoOtptPt.m_SmplRate, m_AdoOtptPt.m_FrmLenUnit, 1, 1, 0, m_AAjbPt.m_MinNeedBufFrmCnt, m_AAjbPt.m_MaxNeedBufFrmCnt, m_AAjbPt.m_MaxCntuLostFrmCnt, m_AAjbPt.m_AdaptSensitivity, (mTalkNetwork.m_XfrMode == 0) ? 0 : 1, m_ErrInfoVstrPt) == 0) {
-                        if (m_IsPrintLogcat != 0) Log.i(m_CurClsNameStrPt, "初始化音频自适应抖动缓冲器成功。");
-                    } else {
-                        String p_InfoStrPt = "初始化音频自适应抖动缓冲器失败。原因：" + m_ErrInfoVstrPt.GetStr();
-                        if (m_IsPrintLogcat != 0) Log.e(m_CurClsNameStrPt, p_InfoStrPt);
-                        Message p_MessagePt = new Message();
-                        p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                        p_MessagePt.obj = p_InfoStrPt;
-                        m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                        break Out;
-                    }
-
-                    //初始化视频自适应抖动缓冲器。
-                    m_VAjbPt.m_Pt = new HeavenTao.Vdo.VAjb();
-                    if (m_VAjbPt.m_Pt.Init(1, m_VAjbPt.m_MinNeedBufFrmCnt, m_VAjbPt.m_MaxNeedBufFrmCnt, m_VAjbPt.m_AdaptSensitivity, m_ErrInfoVstrPt) == 0) {
-                        if (m_IsPrintLogcat != 0) Log.i(m_CurClsNameStrPt, "初始化视频自适应抖动缓冲器成功。");
-                    } else {
-                        String p_InfoStrPt = "初始化视频自适应抖动缓冲器失败。原因：" + m_ErrInfoVstrPt.GetStr();
-                        if (m_IsPrintLogcat != 0) Log.e(m_CurClsNameStrPt, p_InfoStrPt);
-                        Message p_MessagePt = new Message();
-                        p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                        p_MessagePt.obj = p_InfoStrPt;
-                        m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                        break Out;
-                    }
-                    break;
-                }
+                String p_InfoStrPt = "用本端套接字接收一个连接的远端套接字发送的数据包失败。原因：" + m_ErrInfoVstrPt.GetStr();
+                toSendMessage(p_InfoStrPt);
+                return -1;
             }
+        } //等待允许连接结束。
 
+        m_LastSendAdoInptFrmIsAct = 0; //设置最后发送的一个音频输入帧为无语音活动。
+        m_LastSendAdoInptFrmTimeStamp = 0 - 1; //设置最后一个发送音频输入帧的时间戳为0的前一个，因为第一次发送音频输入帧时会递增一个步进。
+        m_LastSendVdoInptFrmTimeStamp = 0 - 1; //设置最后一个发送视频输入帧的时间戳为0的前一个，因为第一次发送视频输入帧时会递增一个步进。
+
+        switch (m_UseWhatRecvOtptFrm) //使用什么接收输出帧。
+        {
+            case 0: //如果要使用链表。
             {
-                String p_InfoStrPt = "开始对讲。";
-                if (m_IsPrintLogcat != 0) Log.i(m_CurClsNameStrPt, p_InfoStrPt);
-                Message p_MessagePt = new Message();
-                p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                p_MessagePt.obj = p_InfoStrPt;
-                m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                if (m_IsShowToast != 0) m_ShowToastActivityPt.runOnUiThread(new Runnable() {
-                    public void run() {
-                        Toast.makeText(m_ShowToastActivityPt, p_InfoStrPt, Toast.LENGTH_LONG).show();
-                    }
-                });
+                //初始化接收音频输出帧链表。
+                m_RecvAdoOtptFrmLnkLstPt = new LinkedList<byte[]>(); //创建接收音频输出帧链表。
+                if (m_IsPrintLogcat != 0) Log.i(m_CurClsNameStrPt, "初始化接收音频输出帧链表对象成功。");
+
+                //初始化接收视频输出帧链表。
+                m_RecvVdoOtptFrmLnkLstPt = new LinkedList<byte[]>(); //创建接收视频输出帧链表。
+                if (m_IsPrintLogcat != 0) Log.i(m_CurClsNameStrPt, "初始化接收视频输出帧链表对象成功。");
+                break;
             }
-
+            case 1: //如果要使用自适应抖动缓冲器。
             {
-                Message p_MessagePt = new Message();
-                p_MessagePt.what = MainActivityHandler.Msg.Vibrate.ordinal();
-                m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-            } //向主界面发送振动的消息。
-            if (mTalkNetwork.m_XfrMode == 0) {
-                Message p_MessagePt = new Message();
-                p_MessagePt.what = MainActivityHandler.Msg.PttBtnInit.ordinal();
-                m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-            } //向主界面发送初始化一键即按即通按钮的消息。
-            SendUserMsg(UserMsgTyp.LclTkbkMode, TkbkMode.NoChg); //发送对讲模式包。
+                //初始化音频自适应抖动缓冲器。
+                m_AAjbPt.m_Pt = new HeavenTao.Ado.AAjb();
+                if (m_AAjbPt.m_Pt.Init(m_AdoOtptPt.m_SmplRate, m_AdoOtptPt.m_FrmLenUnit, 1, 1, 0, m_AAjbPt.m_MinNeedBufFrmCnt, m_AAjbPt.m_MaxNeedBufFrmCnt, m_AAjbPt.m_MaxCntuLostFrmCnt, m_AAjbPt.m_AdaptSensitivity, (mTalkNetwork.m_XfrMode == 0) ? 0 : 1, m_ErrInfoVstrPt) == 0) {
+                    if (m_IsPrintLogcat != 0) Log.i(m_CurClsNameStrPt, "初始化音频自适应抖动缓冲器成功。");
+                } else {
+                    String p_InfoStrPt = "初始化音频自适应抖动缓冲器失败。原因：" + m_ErrInfoVstrPt.GetStr();
+                    toSendMessage(p_InfoStrPt);
+                    return -1;
+                }
 
-            p_Rslt = 0; //设置本函数执行成功。
+                //初始化视频自适应抖动缓冲器。
+                m_VAjbPt.m_Pt = new HeavenTao.Vdo.VAjb();
+                if (m_VAjbPt.m_Pt.Init(1, m_VAjbPt.m_MinNeedBufFrmCnt, m_VAjbPt.m_MaxNeedBufFrmCnt, m_VAjbPt.m_AdaptSensitivity, m_ErrInfoVstrPt) == 0) {
+                    if (m_IsPrintLogcat != 0) Log.i(m_CurClsNameStrPt, "初始化视频自适应抖动缓冲器成功。");
+                } else {
+                    String p_InfoStrPt = "初始化视频自适应抖动缓冲器失败。原因：" + m_ErrInfoVstrPt.GetStr();
+                    toSendMessage(p_InfoStrPt);
+                    return -1;
+                }
+                break;
+            }
         }
 
-        return p_Rslt;
+        {
+            String p_InfoStrPt = "开始对讲。";
+            toSendMessage1(p_InfoStrPt);
+            if (m_IsShowToast != 0) m_ShowToastActivityPt.runOnUiThread(new Runnable() {
+                public void run() {
+                    Toast.makeText(m_ShowToastActivityPt, p_InfoStrPt, Toast.LENGTH_LONG).show();
+                }
+            });
+        }
+
+        {
+            Message p_MessagePt = new Message();
+            p_MessagePt.what = Msg.Vibrate.ordinal();
+            m_MainActivityHandlerPt.sendMessage(p_MessagePt);
+        } //向主界面发送振动的消息。
+
+        //不用”一键即按即通“
+
+        SendUserMsg(UserMsgTyp.LclTkbkMode, TkbkMode.NoChg); //发送对讲模式包。
+
+        return 0;
+    }
+
+    private void toSendMessage4() {
+        Message p_messagePt = new Message();
+        p_messagePt.what = Msg.MediaPocsThrdInit.ordinal();
+        m_MainActivityHandlerPt.sendMessage(p_messagePt);
+    }
+
+    private void initData() {
+        m_RqstCnctRslt = 0; //设置请求连接的结果为没有选择。
+        m_IsRecvExitPkt = 0; //设置没有接收到退出包。
+        if (m_TmpBytePt == null) m_TmpBytePt = new byte[1024 * 1024]; //初始化临时数据。
+        if (m_TmpByte2Pt == null) m_TmpByte2Pt = new byte[1024 * 1024]; //初始化临时数据。
+        if (m_TmpByte3Pt == null) m_TmpByte3Pt = new byte[1024 * 1024]; //初始化临时数据。
+        if (m_TmpHTIntPt == null) m_TmpHTIntPt = new HTInt(); //初始化临时数据。
+        if (m_TmpHTInt2Pt == null) m_TmpHTInt2Pt = new HTInt(); //初始化临时数据。
+        if (m_TmpHTInt3Pt == null) m_TmpHTInt3Pt = new HTInt(); //初始化临时数据。
+        if (m_TmpHTLongPt == null) m_TmpHTLongPt = new HTLong(); //初始化临时数据。
+        if (m_TmpHTLong2Pt == null) m_TmpHTLong2Pt = new HTLong(); //初始化临时数据。
+        if (m_TmpHTLong3Pt == null) m_TmpHTLong3Pt = new HTLong(); //初始化临时数据。
+    }
+
+    private void toSendMessage3(HTString p_RmtNodeAddrPt) {
+        Message p_MessagePt = new Message();
+        p_MessagePt.what = Msg.RqstCnctDlgInit.ordinal();
+        p_MessagePt.obj = p_RmtNodeAddrPt.m_Val;
+        m_MainActivityHandlerPt.sendMessage(p_MessagePt);
+    }
+
+    private void toSendMessage2() {
+        Message p_MessagePt = new Message();
+        p_MessagePt.what = Msg.RqstCnctDlgDstoy.ordinal();
+        m_MainActivityHandlerPt.sendMessage(p_MessagePt);
+    }
+
+    private void toSendMessage1(String p_InfoStrPt) {
+        if (m_IsPrintLogcat != 0) Log.i(m_CurClsNameStrPt, p_InfoStrPt);
+        Message p_MessagePt = new Message();
+        p_MessagePt.what = Msg.ShowLog.ordinal();
+        p_MessagePt.obj = p_InfoStrPt;
+        m_MainActivityHandlerPt.sendMessage(p_MessagePt);
+    }
+
+    private void toSendMessage(String p_InfoStrPt) {
+        if (m_IsPrintLogcat != 0) Log.e(m_CurClsNameStrPt, p_InfoStrPt);
+        Message p_MessagePt = new Message();
+        p_MessagePt.what = Msg.ShowLog.ordinal();
+        p_MessagePt.obj = p_InfoStrPt;
+        m_MainActivityHandlerPt.sendMessage(p_MessagePt);
     }
 
     //用户定义的处理函数。
@@ -869,229 +565,218 @@ public class MyMediaPocsThrd extends MediaPocsThrd {
         int p_TmpInt;
         int p_TmpLnkLstElmTotal;
 
-        Out:
-        {
-            //接收远端发送过来的一个数据包。
-            if (((mTalkNetwork.m_UseWhatXfrPrtcl == 0) && (mTalkNetwork.m_TcpClntSoktPt.RecvApkt(m_TmpBytePt, m_TmpBytePt.length, m_TmpHTLongPt, (short) 0, 0, m_ErrInfoVstrPt) == 0)) ||
-                    ((mTalkNetwork.m_UseWhatXfrPrtcl == 1) && (mTalkNetwork.m_AudpSoktPt.RecvApkt(mTalkNetwork.m_AudpCnctIdx.m_Val, m_TmpBytePt, m_TmpBytePt.length, m_TmpHTLongPt, (short) 0, m_ErrInfoVstrPt) == 0))) {
-                if (m_TmpHTLongPt.m_Val != -1) //如果用本端套接字接收一个连接的远端套接字发送的数据包成功。
-                {
-                    if (m_TmpHTLongPt.m_Val == 0) //如果数据包的数据长度为0。
-                    {
-                        if (m_IsPrintLogcat != 0)
-                            Log.e(m_CurClsNameStrPt, "接收到一个数据包的数据长度为" + m_TmpHTLongPt.m_Val + "，表示没有数据，无法继续接收。");
-                        break Out;
-                    } else if (m_TmpBytePt[0] == (byte) PktTyp.TkbkMode.ordinal()) //如果是对讲模式包。
-                    {
-                        if (m_TmpHTLongPt.m_Val < 1 + 1) //如果音频输出帧包的数据长度小于1 + 1，表示没有对讲模式。
-                        {
-                            if (m_IsPrintLogcat != 0)
-                                Log.e(m_CurClsNameStrPt, "接收到一个对讲模式包的数据长度为" + m_TmpHTLongPt.m_Val + "小于1 + 1，表示没有对讲模式，无法继续接收。");
-                            break Out;
-                        }
-                        if (m_TmpBytePt[1] >= TkbkMode.NoChg.ordinal()) {
-                            if (m_IsPrintLogcat != 0)
-                                Log.e(m_CurClsNameStrPt, "接收到一个对讲模式包的对讲模式为" + m_TmpBytePt[1] + "不正确，无法继续接收。");
-                            break Out;
-                        }
 
-                        m_RmtTkbkMode = TkbkMode.values()[m_TmpBytePt[1]]; //设置远端对讲模式。
-                        if (m_IsPrintLogcat != 0)
-                            Log.i(m_CurClsNameStrPt, "接收到一个对讲模式包。对讲模式：" + m_RmtTkbkMode);
-                        SetTkbkMode(); //设置对讲模式。
-                    } else if (m_TmpBytePt[0] == (byte) PktTyp.AdoFrm.ordinal()) //如果是音频输出帧包。
-                    {
-                        if (m_TmpHTLongPt.m_Val < 1 + 4) //如果音频输出帧包的数据长度小于1 + 4，表示没有音频输出帧时间戳。
-                        {
-                            if (m_IsPrintLogcat != 0)
-                                Log.e(m_CurClsNameStrPt, "接收到一个音频输出帧包的数据长度为" + m_TmpHTLongPt.m_Val + "小于1 + 4，表示没有音频输出帧时间戳，无法继续接收。");
-                            break Out;
-                        }
-
-                        //读取音频输出帧时间戳。
-                        p_TmpInt = (m_TmpBytePt[1] & 0xFF) + ((m_TmpBytePt[2] & 0xFF) << 8) + ((m_TmpBytePt[3] & 0xFF) << 16) + ((m_TmpBytePt[4] & 0xFF) << 24);
-
-                        if ((m_AdoOtptPt.m_IsInit != 0) || //如果已初始化音频输出。
-                                ((mTalkNetwork.m_XfrMode == 0) && ((m_LclTkbkMode == TkbkMode.Ado) || (m_LclTkbkMode == TkbkMode.AdoVdo)))) //如果传输模式为实时半双工（一键通），且本端对讲模式为音频或音视频。
-                        {
-                            //将音频输出帧放入链表或自适应抖动缓冲器。
-                            switch (m_UseWhatRecvOtptFrm) //使用什么接收输出帧。
-                            {
-                                case 0: //如果要使用链表。
-                                {
-                                    if (m_TmpHTLongPt.m_Val > 1 + 4) //如果该音频输出帧为有语音活动。
-                                    {
-                                        p_TmpLnkLstElmTotal = m_RecvAdoOtptFrmLnkLstPt.size(); //获取接收音频输出帧链表的元素总数。
-                                        if (p_TmpLnkLstElmTotal <= 50) {
-                                            synchronized (m_RecvAdoOtptFrmLnkLstPt) {
-                                                m_RecvAdoOtptFrmLnkLstPt.addLast(Arrays.copyOfRange(m_TmpBytePt, 1 + 4, (int) (m_TmpHTLongPt.m_Val)));
-                                            }
-                                            if (m_IsPrintLogcat != 0)
-                                                Log.i(m_CurClsNameStrPt, "接收到一个有语音活动的音频输出帧包，并放入接收音频输出帧链表成功。音频输出帧时间戳：" + p_TmpInt + "，总长度：" + m_TmpHTLongPt.m_Val + "。");
-                                        } else {
-                                            if (m_IsPrintLogcat != 0)
-                                                Log.e(m_CurClsNameStrPt, "接收到一个有语音活动的音频输出帧包，但接收音频输出帧链表中帧总数为" + p_TmpLnkLstElmTotal + "已经超过上限50，不再放入接收音频输出帧链表。音频输出帧时间戳：" + p_TmpInt + "，总长度：" + m_TmpHTLongPt.m_Val + "。");
-                                        }
-                                    } else //如果该音频输出帧为无语音活动。
-                                    {
-                                        if (m_IsPrintLogcat != 0)
-                                            Log.i(m_CurClsNameStrPt, "接收到一个无语音活动的音频输出帧包，无需放入接收音频输出帧链表。音频输出帧时间戳：" + p_TmpInt + "，总长度：" + m_TmpHTLongPt.m_Val + "。");
-                                    }
-                                    break;
-                                }
-                                case 1: //如果要使用自适应抖动缓冲器。
-                                {
-                                    if (m_TmpHTLongPt.m_Val > 1 + 4) //如果该音频输出帧为有语音活动。
-                                    {
-                                        m_AAjbPt.m_Pt.PutByteFrm(p_TmpInt, m_TmpBytePt, 1 + 4, m_TmpHTLongPt.m_Val - 1 - 4, 1, null);
-                                        if (m_IsPrintLogcat != 0)
-                                            Log.i(m_CurClsNameStrPt, "接收到一个有语音活动的音频输出帧包，并放入音频自适应抖动缓冲器成功。音频输出帧时间戳：" + p_TmpInt + "，总长度：" + m_TmpHTLongPt.m_Val + "。");
-                                    } else //如果该音频输出帧为无语音活动。
-                                    {
-                                        m_AAjbPt.m_Pt.PutByteFrm(p_TmpInt, m_TmpBytePt, 1 + 4, 0, 1, null);
-                                        if (m_IsPrintLogcat != 0)
-                                            Log.i(m_CurClsNameStrPt, "接收到一个无语音活动的音频输出帧包，并放入音频自适应抖动缓冲器成功。音频输出帧时间戳：" + p_TmpInt + "，总长度：" + m_TmpHTLongPt.m_Val + "。");
-                                    }
-
-                                    HTInt p_CurHaveBufActFrmCntPt = new HTInt(); //存放当前已缓冲有活动帧的数量。
-                                    HTInt p_CurHaveBufInactFrmCntPt = new HTInt(); //存放当前已缓冲无活动帧的数量。
-                                    HTInt p_CurHaveBufFrmCntPt = new HTInt(); //存放当前已缓冲帧的数量。
-                                    HTInt p_MinNeedBufFrmCntPt = new HTInt(); //存放最小需缓冲帧的数量。
-                                    HTInt p_MaxNeedBufFrmCntPt = new HTInt(); //存放最大需缓冲帧的数量。
-                                    HTInt p_MaxCntuLostFrmCntPt = new HTInt(); //存放最大连续丢失帧的数量。
-                                    HTInt p_CurNeedBufFrmCntPt = new HTInt(); //存放当前需缓冲帧的数量。
-                                    m_AAjbPt.m_Pt.GetBufFrmCnt(p_CurHaveBufActFrmCntPt, p_CurHaveBufInactFrmCntPt, p_CurHaveBufFrmCntPt, p_MinNeedBufFrmCntPt, p_MaxNeedBufFrmCntPt, p_MaxCntuLostFrmCntPt, p_CurNeedBufFrmCntPt, 1, null);
-                                    if (m_IsPrintLogcat != 0)
-                                        Log.i(m_CurClsNameStrPt, "音频自适应抖动缓冲器：有活动帧：" + p_CurHaveBufActFrmCntPt.m_Val + "，无活动帧：" + p_CurHaveBufInactFrmCntPt.m_Val + "，帧：" + p_CurHaveBufFrmCntPt.m_Val + "，最小需帧：" + p_MinNeedBufFrmCntPt.m_Val + "，最大需帧：" + p_MaxNeedBufFrmCntPt.m_Val + "，最大丢帧：" + p_MaxCntuLostFrmCntPt.m_Val + "，当前需帧：" + p_CurNeedBufFrmCntPt.m_Val + "。");
-                                    break;
-                                }
-                            }
-                        } else //如果未初始化音频输出。
-                        {
-                            if (m_TmpHTLongPt.m_Val > 1 + 4) //如果该音频输出帧为有语音活动。
-                            {
-                                if (m_IsPrintLogcat != 0)
-                                    Log.i(m_CurClsNameStrPt, "接收到一个有语音活动的音频输出帧包成功，但未初始化音频输出。音频输出帧时间戳：" + p_TmpInt + "，总长度：" + m_TmpHTLongPt.m_Val + "。");
-                            } else //如果该音频输出帧为无语音活动。
-                            {
-                                if (m_IsPrintLogcat != 0)
-                                    Log.i(m_CurClsNameStrPt, "接收到一个无语音活动的音频输出帧包成功，但未初始化音频输出。音频输出帧时间戳：" + p_TmpInt + "，总长度：" + m_TmpHTLongPt.m_Val + "。");
-                            }
-                        }
-                    } else if (m_TmpBytePt[0] == (byte) PktTyp.VdoFrm.ordinal()) //如果是视频输出帧包。
-                    {
-                        if (m_TmpHTLongPt.m_Val < 1 + 4) //如果视频输出帧包的数据长度小于1 + 4，表示没有视频输出帧时间戳。
-                        {
-                            if (m_IsPrintLogcat != 0)
-                                Log.e(m_CurClsNameStrPt, "接收到一个视频输出帧包的数据长度为" + m_TmpHTLongPt.m_Val + "小于1 + 4，表示没有视频输出帧时间戳，无法继续接收。");
-                            break Out;
-                        }
-
-                        //读取视频输出帧时间戳。
-                        p_TmpInt = (m_TmpBytePt[1] & 0xFF) + ((m_TmpBytePt[2] & 0xFF) << 8) + ((m_TmpBytePt[3] & 0xFF) << 16) + ((m_TmpBytePt[4] & 0xFF) << 24);
-
-                        if ((m_VdoOtptPt.m_IsInit != 0) || //如果已初始化视频输出。
-                                ((mTalkNetwork.m_XfrMode == 0) && ((m_LclTkbkMode == TkbkMode.Vdo) || (m_LclTkbkMode == TkbkMode.AdoVdo)))) //如果传输模式为实时半双工（一键通），且本端对讲模式为视频或音视频。
-                        {
-                            //将视频输出帧放入链表或自适应抖动缓冲器。
-                            switch (m_UseWhatRecvOtptFrm) //使用什么接收输出帧。
-                            {
-                                case 0: //如果要使用链表。
-                                {
-                                    if (m_TmpHTLongPt.m_Val > 1 + 4) //如果该视频输出帧为有图像活动。
-                                    {
-                                        p_TmpLnkLstElmTotal = m_RecvVdoOtptFrmLnkLstPt.size(); //获取接收视频输出帧链表的元素总数。
-                                        if (p_TmpLnkLstElmTotal <= 20) {
-                                            synchronized (m_RecvVdoOtptFrmLnkLstPt) {
-                                                m_RecvVdoOtptFrmLnkLstPt.addLast(Arrays.copyOfRange(m_TmpBytePt, 1 + 4, (int) (m_TmpHTLongPt.m_Val)));
-                                            }
-                                            if (m_IsPrintLogcat != 0)
-                                                Log.i(m_CurClsNameStrPt, "接收到一个有图像活动的视频输出帧包，并放入接收视频输出帧链表成功。视频输出帧时间戳：" + p_TmpInt + "，总长度：" + m_TmpHTLongPt.m_Val + "。");
-                                        } else {
-                                            if (m_IsPrintLogcat != 0)
-                                                Log.e(m_CurClsNameStrPt, "接收到一个有图像活动的视频输出帧包，但接收视频输出帧链表中帧总数为" + p_TmpLnkLstElmTotal + "已经超过上限20，不再放入接收视频输出帧链表。视频输出帧时间戳：" + p_TmpInt + "，总长度：" + m_TmpHTLongPt.m_Val + "。");
-                                        }
-                                    } else //如果该视频输出帧为无图像活动。
-                                    {
-                                        if (m_IsPrintLogcat != 0)
-                                            Log.i(m_CurClsNameStrPt, "接收到一个无图像活动的视频输出帧包，无需放入接收视频输出帧链表。视频输出帧时间戳：" + p_TmpInt + "，总长度：" + m_TmpHTLongPt.m_Val + "。");
-                                    }
-                                    break;
-                                }
-                                case 1: //如果要使用自适应抖动缓冲器。
-                                {
-                                    if (m_TmpHTLongPt.m_Val > 1 + 4) //如果该视频输出帧为有图像活动。
-                                    {
-                                        m_VAjbPt.m_Pt.PutByteFrm(SystemClock.uptimeMillis(), p_TmpInt, m_TmpBytePt, 1 + 4, m_TmpHTLongPt.m_Val - 1 - 4, 1, null);
-                                        if (m_IsPrintLogcat != 0)
-                                            Log.i(m_CurClsNameStrPt, "接收到一个有图像活动的视频输出帧包，并放入视频自适应抖动缓冲器成功。视频输出帧时间戳：" + p_TmpInt + "，总长度：" + m_TmpHTLongPt.m_Val + "，类型：" + (m_TmpBytePt[9] & 0xff) + "。");
-                                    } else //如果该视频输出帧为无图像活动。
-                                    {
-                                        if (m_IsPrintLogcat != 0)
-                                            Log.i(m_CurClsNameStrPt, "接收到一个无图像活动的视频输出帧包，无需放入视频自适应抖动缓冲器。视频输出帧时间戳：" + p_TmpInt + "，总长度：" + m_TmpHTLongPt.m_Val + "。");
-                                    }
-
-                                    HTInt p_CurHaveBufFrmCntPt = new HTInt(); //存放当前已缓冲帧的数量。
-                                    HTInt p_MinNeedBufFrmCntPt = new HTInt(); //存放最小需缓冲帧的数量。
-                                    HTInt p_MaxNeedBufFrmCntPt = new HTInt(); //存放最大需缓冲帧的数量。
-                                    HTInt p_CurNeedBufFrmCntPt = new HTInt(); //存放当前需缓冲帧的数量。
-                                    m_VAjbPt.m_Pt.GetBufFrmCnt(p_CurHaveBufFrmCntPt, p_MinNeedBufFrmCntPt, p_MaxNeedBufFrmCntPt, p_CurNeedBufFrmCntPt, 1, null);
-                                    if (m_IsPrintLogcat != 0)
-                                        Log.i(m_CurClsNameStrPt, "视频自适应抖动缓冲器：帧：" + p_CurHaveBufFrmCntPt.m_Val + "，最小需帧：" + p_MinNeedBufFrmCntPt.m_Val + "，最大需帧：" + p_MaxNeedBufFrmCntPt.m_Val + "，当前需帧：" + p_CurNeedBufFrmCntPt.m_Val + "。");
-                                    break;
-                                }
-                            }
-                        } else //如果未初始化视频输出。
-                        {
-                            if (m_TmpHTLongPt.m_Val > 1 + 4) //如果该视频输出帧为有图像活动。
-                            {
-                                if (m_IsPrintLogcat != 0)
-                                    Log.i(m_CurClsNameStrPt, "接收到一个有图像活动的视频输出帧包成功，但未初始化视频输出。视频输出帧时间戳：" + p_TmpInt + "，总长度：" + m_TmpHTLongPt.m_Val + "。");
-                            } else //如果该视频输出帧为无图像活动。
-                            {
-                                if (m_IsPrintLogcat != 0)
-                                    Log.i(m_CurClsNameStrPt, "接收到一个无图像活动的视频输出帧包成功，但未初始化视频输出。视频输出帧时间戳：" + p_TmpInt + "，总长度：" + m_TmpHTLongPt.m_Val + "。");
-                            }
-                        }
-                    } else if (m_TmpBytePt[0] == (byte) PktTyp.Exit.ordinal()) //如果是退出包。
-                    {
-                        if (m_TmpHTLongPt.m_Val > 1) //如果退出包的数据长度大于1。
-                        {
-                            if (m_IsPrintLogcat != 0)
-                                Log.e(m_CurClsNameStrPt, "接收到一个退出包的数据长度为" + m_TmpHTLongPt.m_Val + "大于1，表示还有其他数据，无法继续接收。");
-                            break Out;
-                        }
-
-                        m_IsRecvExitPkt = 1; //设置已经接收到退出包。
-                        RqirExit(1, 0); //请求退出。
-
-                        String p_InfoStrPt = "接收到一个退出包。";
-                        if (m_IsPrintLogcat != 0) Log.i(m_CurClsNameStrPt, p_InfoStrPt);
-                        Message p_MessagePt = new Message();
-                        p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                        p_MessagePt.obj = p_InfoStrPt;
-                        m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                        if (m_IsShowToast != 0) m_ShowToastActivityPt.runOnUiThread(new Runnable() {
-                            public void run() {
-                                Toast.makeText(m_ShowToastActivityPt, p_InfoStrPt, Toast.LENGTH_LONG).show();
-                            }
-                        });
-                    }
-                } //如果用本端套接字接收一个连接的远端套接字发送的数据包超时，就重新接收。
-            } else //如果用本端套接字接收一个连接的远端套接字发送的数据包失败。
+        //接收远端发送过来的一个数据包。
+        if (((mTalkNetwork.m_UseWhatXfrPrtcl == 0) && (mTalkNetwork.m_TcpClntSoktPt.RecvApkt(m_TmpBytePt, m_TmpBytePt.length, m_TmpHTLongPt, (short) 0, 0, m_ErrInfoVstrPt) == 0)) ||
+                ((mTalkNetwork.m_UseWhatXfrPrtcl == 1) && (mTalkNetwork.m_AudpSoktPt.RecvApkt(mTalkNetwork.m_AudpCnctIdx.m_Val, m_TmpBytePt, m_TmpBytePt.length, m_TmpHTLongPt, (short) 0, m_ErrInfoVstrPt) == 0))) {
+            if (m_TmpHTLongPt.m_Val != -1) //如果用本端套接字接收一个连接的远端套接字发送的数据包成功。
             {
-                String p_InfoStrPt = "用本端套接字接收一个连接的远端套接字发送的数据包失败。原因：" + m_ErrInfoVstrPt.GetStr();
-                if (m_IsPrintLogcat != 0) Log.e(m_CurClsNameStrPt, p_InfoStrPt);
-                Message p_MessagePt = new Message();
-                p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                p_MessagePt.obj = p_InfoStrPt;
-                m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                break Out;
-            }
+                if (m_TmpHTLongPt.m_Val == 0) //如果数据包的数据长度为0。
+                {
+                    if (m_IsPrintLogcat != 0)
+                        Log.e(m_CurClsNameStrPt, "接收到一个数据包的数据长度为" + m_TmpHTLongPt.m_Val + "，表示没有数据，无法继续接收。");
+                    return -1;
+                } else if (m_TmpBytePt[0] == (byte) PktTyp.TkbkMode.ordinal()) //如果是对讲模式包。
+                {
+                    if (m_TmpHTLongPt.m_Val < 1 + 1) //如果音频输出帧包的数据长度小于1 + 1，表示没有对讲模式。
+                    {
+                        if (m_IsPrintLogcat != 0)
+                            Log.e(m_CurClsNameStrPt, "接收到一个对讲模式包的数据长度为" + m_TmpHTLongPt.m_Val + "小于1 + 1，表示没有对讲模式，无法继续接收。");
+                        return -1;
+                    }
+                    if (m_TmpBytePt[1] >= TkbkMode.NoChg.ordinal()) {
+                        if (m_IsPrintLogcat != 0)
+                            Log.e(m_CurClsNameStrPt, "接收到一个对讲模式包的对讲模式为" + m_TmpBytePt[1] + "不正确，无法继续接收。");
+                        return -1;
+                    }
 
-            p_Rslt = 0; //设置本函数执行成功。
+                    m_RmtTkbkMode = TkbkMode.values()[m_TmpBytePt[1]]; //设置远端对讲模式。
+                    if (m_IsPrintLogcat != 0)
+                        Log.i(m_CurClsNameStrPt, "接收到一个对讲模式包。对讲模式：" + m_RmtTkbkMode);
+                    SetTkbkMode(); //设置对讲模式。
+                } else if (m_TmpBytePt[0] == (byte) PktTyp.AdoFrm.ordinal()) //如果是音频输出帧包。
+                {
+                    if (m_TmpHTLongPt.m_Val < 1 + 4) //如果音频输出帧包的数据长度小于1 + 4，表示没有音频输出帧时间戳。
+                    {
+                        if (m_IsPrintLogcat != 0)
+                            Log.e(m_CurClsNameStrPt, "接收到一个音频输出帧包的数据长度为" + m_TmpHTLongPt.m_Val + "小于1 + 4，表示没有音频输出帧时间戳，无法继续接收。");
+                        return -1;
+                    }
+
+                    //读取音频输出帧时间戳。
+                    p_TmpInt = (m_TmpBytePt[1] & 0xFF) + ((m_TmpBytePt[2] & 0xFF) << 8) + ((m_TmpBytePt[3] & 0xFF) << 16) + ((m_TmpBytePt[4] & 0xFF) << 24);
+
+                    if ((m_AdoOtptPt.m_IsInit != 0) || //如果已初始化音频输出。
+                            ((mTalkNetwork.m_XfrMode == 0) && ((m_LclTkbkMode == TkbkMode.Ado) || (m_LclTkbkMode == TkbkMode.AdoVdo)))) //如果传输模式为实时半双工（一键通），且本端对讲模式为音频或音视频。
+                    {
+                        //将音频输出帧放入链表或自适应抖动缓冲器。
+                        switch (m_UseWhatRecvOtptFrm) //使用什么接收输出帧。
+                        {
+                            case 0: //如果要使用链表。
+                            {
+                                if (m_TmpHTLongPt.m_Val > 1 + 4) //如果该音频输出帧为有语音活动。
+                                {
+                                    p_TmpLnkLstElmTotal = m_RecvAdoOtptFrmLnkLstPt.size(); //获取接收音频输出帧链表的元素总数。
+                                    if (p_TmpLnkLstElmTotal <= 50) {
+                                        synchronized (m_RecvAdoOtptFrmLnkLstPt) {
+                                            m_RecvAdoOtptFrmLnkLstPt.addLast(Arrays.copyOfRange(m_TmpBytePt, 1 + 4, (int) (m_TmpHTLongPt.m_Val)));
+                                        }
+                                        if (m_IsPrintLogcat != 0)
+                                            Log.i(m_CurClsNameStrPt, "接收到一个有语音活动的音频输出帧包，并放入接收音频输出帧链表成功。音频输出帧时间戳：" + p_TmpInt + "，总长度：" + m_TmpHTLongPt.m_Val + "。");
+                                    } else {
+                                        if (m_IsPrintLogcat != 0)
+                                            Log.e(m_CurClsNameStrPt, "接收到一个有语音活动的音频输出帧包，但接收音频输出帧链表中帧总数为" + p_TmpLnkLstElmTotal + "已经超过上限50，不再放入接收音频输出帧链表。音频输出帧时间戳：" + p_TmpInt + "，总长度：" + m_TmpHTLongPt.m_Val + "。");
+                                    }
+                                } else //如果该音频输出帧为无语音活动。
+                                {
+                                    if (m_IsPrintLogcat != 0)
+                                        Log.i(m_CurClsNameStrPt, "接收到一个无语音活动的音频输出帧包，无需放入接收音频输出帧链表。音频输出帧时间戳：" + p_TmpInt + "，总长度：" + m_TmpHTLongPt.m_Val + "。");
+                                }
+                                break;
+                            }
+                            case 1: //如果要使用自适应抖动缓冲器。
+                            {
+                                if (m_TmpHTLongPt.m_Val > 1 + 4) //如果该音频输出帧为有语音活动。
+                                {
+                                    m_AAjbPt.m_Pt.PutByteFrm(p_TmpInt, m_TmpBytePt, 1 + 4, m_TmpHTLongPt.m_Val - 1 - 4, 1, null);
+                                    if (m_IsPrintLogcat != 0)
+                                        Log.i(m_CurClsNameStrPt, "接收到一个有语音活动的音频输出帧包，并放入音频自适应抖动缓冲器成功。音频输出帧时间戳：" + p_TmpInt + "，总长度：" + m_TmpHTLongPt.m_Val + "。");
+                                } else //如果该音频输出帧为无语音活动。
+                                {
+                                    m_AAjbPt.m_Pt.PutByteFrm(p_TmpInt, m_TmpBytePt, 1 + 4, 0, 1, null);
+                                    if (m_IsPrintLogcat != 0)
+                                        Log.i(m_CurClsNameStrPt, "接收到一个无语音活动的音频输出帧包，并放入音频自适应抖动缓冲器成功。音频输出帧时间戳：" + p_TmpInt + "，总长度：" + m_TmpHTLongPt.m_Val + "。");
+                                }
+
+                                HTInt p_CurHaveBufActFrmCntPt = new HTInt(); //存放当前已缓冲有活动帧的数量。
+                                HTInt p_CurHaveBufInactFrmCntPt = new HTInt(); //存放当前已缓冲无活动帧的数量。
+                                HTInt p_CurHaveBufFrmCntPt = new HTInt(); //存放当前已缓冲帧的数量。
+                                HTInt p_MinNeedBufFrmCntPt = new HTInt(); //存放最小需缓冲帧的数量。
+                                HTInt p_MaxNeedBufFrmCntPt = new HTInt(); //存放最大需缓冲帧的数量。
+                                HTInt p_MaxCntuLostFrmCntPt = new HTInt(); //存放最大连续丢失帧的数量。
+                                HTInt p_CurNeedBufFrmCntPt = new HTInt(); //存放当前需缓冲帧的数量。
+                                m_AAjbPt.m_Pt.GetBufFrmCnt(p_CurHaveBufActFrmCntPt, p_CurHaveBufInactFrmCntPt, p_CurHaveBufFrmCntPt, p_MinNeedBufFrmCntPt, p_MaxNeedBufFrmCntPt, p_MaxCntuLostFrmCntPt, p_CurNeedBufFrmCntPt, 1, null);
+                                if (m_IsPrintLogcat != 0)
+                                    Log.i(m_CurClsNameStrPt, "音频自适应抖动缓冲器：有活动帧：" + p_CurHaveBufActFrmCntPt.m_Val + "，无活动帧：" + p_CurHaveBufInactFrmCntPt.m_Val + "，帧：" + p_CurHaveBufFrmCntPt.m_Val + "，最小需帧：" + p_MinNeedBufFrmCntPt.m_Val + "，最大需帧：" + p_MaxNeedBufFrmCntPt.m_Val + "，最大丢帧：" + p_MaxCntuLostFrmCntPt.m_Val + "，当前需帧：" + p_CurNeedBufFrmCntPt.m_Val + "。");
+                                break;
+                            }
+                        }
+                    } else //如果未初始化音频输出。
+                    {
+                        if (m_TmpHTLongPt.m_Val > 1 + 4) //如果该音频输出帧为有语音活动。
+                        {
+                            if (m_IsPrintLogcat != 0)
+                                Log.i(m_CurClsNameStrPt, "接收到一个有语音活动的音频输出帧包成功，但未初始化音频输出。音频输出帧时间戳：" + p_TmpInt + "，总长度：" + m_TmpHTLongPt.m_Val + "。");
+                        } else //如果该音频输出帧为无语音活动。
+                        {
+                            if (m_IsPrintLogcat != 0)
+                                Log.i(m_CurClsNameStrPt, "接收到一个无语音活动的音频输出帧包成功，但未初始化音频输出。音频输出帧时间戳：" + p_TmpInt + "，总长度：" + m_TmpHTLongPt.m_Val + "。");
+                        }
+                    }
+                } else if (m_TmpBytePt[0] == (byte) PktTyp.VdoFrm.ordinal()) //如果是视频输出帧包。
+                {
+                    if (m_TmpHTLongPt.m_Val < 1 + 4) //如果视频输出帧包的数据长度小于1 + 4，表示没有视频输出帧时间戳。
+                    {
+                        if (m_IsPrintLogcat != 0)
+                            Log.e(m_CurClsNameStrPt, "接收到一个视频输出帧包的数据长度为" + m_TmpHTLongPt.m_Val + "小于1 + 4，表示没有视频输出帧时间戳，无法继续接收。");
+                        return -1;
+                    }
+
+                    //读取视频输出帧时间戳。
+                    p_TmpInt = (m_TmpBytePt[1] & 0xFF) + ((m_TmpBytePt[2] & 0xFF) << 8) + ((m_TmpBytePt[3] & 0xFF) << 16) + ((m_TmpBytePt[4] & 0xFF) << 24);
+
+                    if ((m_VdoOtptPt.m_IsInit != 0) || //如果已初始化视频输出。
+                            ((mTalkNetwork.m_XfrMode == 0) && ((m_LclTkbkMode == TkbkMode.Vdo) || (m_LclTkbkMode == TkbkMode.AdoVdo)))) //如果传输模式为实时半双工（一键通），且本端对讲模式为视频或音视频。
+                    {
+                        //将视频输出帧放入链表或自适应抖动缓冲器。
+                        switch (m_UseWhatRecvOtptFrm) //使用什么接收输出帧。
+                        {
+                            case 0: //如果要使用链表。
+                            {
+                                if (m_TmpHTLongPt.m_Val > 1 + 4) //如果该视频输出帧为有图像活动。
+                                {
+                                    p_TmpLnkLstElmTotal = m_RecvVdoOtptFrmLnkLstPt.size(); //获取接收视频输出帧链表的元素总数。
+                                    if (p_TmpLnkLstElmTotal <= 20) {
+                                        synchronized (m_RecvVdoOtptFrmLnkLstPt) {
+                                            m_RecvVdoOtptFrmLnkLstPt.addLast(Arrays.copyOfRange(m_TmpBytePt, 1 + 4, (int) (m_TmpHTLongPt.m_Val)));
+                                        }
+                                        if (m_IsPrintLogcat != 0)
+                                            Log.i(m_CurClsNameStrPt, "接收到一个有图像活动的视频输出帧包，并放入接收视频输出帧链表成功。视频输出帧时间戳：" + p_TmpInt + "，总长度：" + m_TmpHTLongPt.m_Val + "。");
+                                    } else {
+                                        if (m_IsPrintLogcat != 0)
+                                            Log.e(m_CurClsNameStrPt, "接收到一个有图像活动的视频输出帧包，但接收视频输出帧链表中帧总数为" + p_TmpLnkLstElmTotal + "已经超过上限20，不再放入接收视频输出帧链表。视频输出帧时间戳：" + p_TmpInt + "，总长度：" + m_TmpHTLongPt.m_Val + "。");
+                                    }
+                                } else //如果该视频输出帧为无图像活动。
+                                {
+                                    if (m_IsPrintLogcat != 0)
+                                        Log.i(m_CurClsNameStrPt, "接收到一个无图像活动的视频输出帧包，无需放入接收视频输出帧链表。视频输出帧时间戳：" + p_TmpInt + "，总长度：" + m_TmpHTLongPt.m_Val + "。");
+                                }
+                                break;
+                            }
+                            case 1: //如果要使用自适应抖动缓冲器。
+                            {
+                                if (m_TmpHTLongPt.m_Val > 1 + 4) //如果该视频输出帧为有图像活动。
+                                {
+                                    m_VAjbPt.m_Pt.PutByteFrm(SystemClock.uptimeMillis(), p_TmpInt, m_TmpBytePt, 1 + 4, m_TmpHTLongPt.m_Val - 1 - 4, 1, null);
+                                    if (m_IsPrintLogcat != 0)
+                                        Log.i(m_CurClsNameStrPt, "接收到一个有图像活动的视频输出帧包，并放入视频自适应抖动缓冲器成功。视频输出帧时间戳：" + p_TmpInt + "，总长度：" + m_TmpHTLongPt.m_Val + "，类型：" + (m_TmpBytePt[9] & 0xff) + "。");
+                                } else //如果该视频输出帧为无图像活动。
+                                {
+                                    if (m_IsPrintLogcat != 0)
+                                        Log.i(m_CurClsNameStrPt, "接收到一个无图像活动的视频输出帧包，无需放入视频自适应抖动缓冲器。视频输出帧时间戳：" + p_TmpInt + "，总长度：" + m_TmpHTLongPt.m_Val + "。");
+                                }
+
+                                HTInt p_CurHaveBufFrmCntPt = new HTInt(); //存放当前已缓冲帧的数量。
+                                HTInt p_MinNeedBufFrmCntPt = new HTInt(); //存放最小需缓冲帧的数量。
+                                HTInt p_MaxNeedBufFrmCntPt = new HTInt(); //存放最大需缓冲帧的数量。
+                                HTInt p_CurNeedBufFrmCntPt = new HTInt(); //存放当前需缓冲帧的数量。
+                                m_VAjbPt.m_Pt.GetBufFrmCnt(p_CurHaveBufFrmCntPt, p_MinNeedBufFrmCntPt, p_MaxNeedBufFrmCntPt, p_CurNeedBufFrmCntPt, 1, null);
+                                if (m_IsPrintLogcat != 0)
+                                    Log.i(m_CurClsNameStrPt, "视频自适应抖动缓冲器：帧：" + p_CurHaveBufFrmCntPt.m_Val + "，最小需帧：" + p_MinNeedBufFrmCntPt.m_Val + "，最大需帧：" + p_MaxNeedBufFrmCntPt.m_Val + "，当前需帧：" + p_CurNeedBufFrmCntPt.m_Val + "。");
+                                break;
+                            }
+                        }
+                    } else //如果未初始化视频输出。
+                    {
+                        if (m_TmpHTLongPt.m_Val > 1 + 4) //如果该视频输出帧为有图像活动。
+                        {
+                            if (m_IsPrintLogcat != 0)
+                                Log.i(m_CurClsNameStrPt, "接收到一个有图像活动的视频输出帧包成功，但未初始化视频输出。视频输出帧时间戳：" + p_TmpInt + "，总长度：" + m_TmpHTLongPt.m_Val + "。");
+                        } else //如果该视频输出帧为无图像活动。
+                        {
+                            if (m_IsPrintLogcat != 0)
+                                Log.i(m_CurClsNameStrPt, "接收到一个无图像活动的视频输出帧包成功，但未初始化视频输出。视频输出帧时间戳：" + p_TmpInt + "，总长度：" + m_TmpHTLongPt.m_Val + "。");
+                        }
+                    }
+                } else if (m_TmpBytePt[0] == (byte) PktTyp.Exit.ordinal()) //如果是退出包。
+                {
+                    if (m_TmpHTLongPt.m_Val > 1) //如果退出包的数据长度大于1。
+                    {
+                        if (m_IsPrintLogcat != 0)
+                            Log.e(m_CurClsNameStrPt, "接收到一个退出包的数据长度为" + m_TmpHTLongPt.m_Val + "大于1，表示还有其他数据，无法继续接收。");
+                        return -1;
+                    }
+
+                    m_IsRecvExitPkt = 1; //设置已经接收到退出包。
+                    RqirExit(1, 0); //请求退出。
+
+                    String p_InfoStrPt = "接收到一个退出包。";
+                    toSendMessage1(p_InfoStrPt);
+                    if (m_IsShowToast != 0) m_ShowToastActivityPt.runOnUiThread(new Runnable() {
+                        public void run() {
+                            Toast.makeText(m_ShowToastActivityPt, p_InfoStrPt, Toast.LENGTH_LONG).show();
+                        }
+                    });
+                }
+            } //如果用本端套接字接收一个连接的远端套接字发送的数据包超时，就重新接收。
+        } else //如果用本端套接字接收一个连接的远端套接字发送的数据包失败。
+        {
+            String p_InfoStrPt = "用本端套接字接收一个连接的远端套接字发送的数据包失败。原因：" + m_ErrInfoVstrPt.GetStr();
+            toSendMessage(p_InfoStrPt);
+            return -1;
         }
 
+        p_Rslt = 0; //设置本函数执行成功。
         return p_Rslt;
     }
 
@@ -1107,21 +792,13 @@ public class MyMediaPocsThrd extends MediaPocsThrd {
                 if (((mTalkNetwork.m_UseWhatXfrPrtcl == 0) && (mTalkNetwork.m_TcpClntSoktPt.SendApkt(m_TmpBytePt, 1, (short) 0, 1, 0, m_ErrInfoVstrPt) != 0)) ||
                         ((mTalkNetwork.m_UseWhatXfrPrtcl == 1) && (mTalkNetwork.m_AudpSoktPt.SendApkt(mTalkNetwork.m_AudpCnctIdx.m_Val, m_TmpBytePt, 1, 10, m_ErrInfoVstrPt) != 0))) {
                     String p_InfoStrPt = "发送一个退出包失败。原因：" + m_ErrInfoVstrPt.GetStr();
-                    if (m_IsPrintLogcat != 0) Log.e(m_CurClsNameStrPt, p_InfoStrPt);
-                    Message p_MessagePt = new Message();
-                    p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                    p_MessagePt.obj = p_InfoStrPt;
-                    m_MainActivityHandlerPt.sendMessage(p_MessagePt);
+                    toSendMessage(p_InfoStrPt);
                     break OutExitPkt;
                 }
 
                 {
                     String p_InfoStrPt = "发送一个退出包成功。";
-                    if (m_IsPrintLogcat != 0) Log.i(m_CurClsNameStrPt, p_InfoStrPt);
-                    Message p_MessagePt = new Message();
-                    p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                    p_MessagePt.obj = p_InfoStrPt;
-                    m_MainActivityHandlerPt.sendMessage(p_MessagePt);
+                    toSendMessage1(p_InfoStrPt);
                 }
 
                 //接收退出包。
@@ -1136,31 +813,19 @@ public class MyMediaPocsThrd extends MediaPocsThrd {
                                 if ((m_TmpHTLongPt.m_Val == 1) && (m_TmpBytePt[0] == (byte) PktTyp.Exit.ordinal())) //如果是退出包。
                                 {
                                     String p_InfoStrPt = "接收到一个退出包。";
-                                    if (m_IsPrintLogcat != 0) Log.i(m_CurClsNameStrPt, p_InfoStrPt);
-                                    Message p_MessagePt = new Message();
-                                    p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                                    p_MessagePt.obj = p_InfoStrPt;
-                                    m_MainActivityHandlerPt.sendMessage(p_MessagePt);
+                                    toSendMessage1(p_InfoStrPt);
                                     break OutExitPkt;
                                 } //如果是其他包，就继续接收。
                             } else //如果用本端套接字接收一个连接的远端套接字发送的数据包超时。
                             {
                                 String p_InfoStrPt = "用本端套接字接收一个连接的远端套接字发送的数据包失败。原因：" + m_ErrInfoVstrPt.GetStr();
-                                if (m_IsPrintLogcat != 0) Log.e(m_CurClsNameStrPt, p_InfoStrPt);
-                                Message p_MessagePt = new Message();
-                                p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                                p_MessagePt.obj = p_InfoStrPt;
-                                m_MainActivityHandlerPt.sendMessage(p_MessagePt);
+                                toSendMessage(p_InfoStrPt);
                                 break OutExitPkt;
                             }
                         } else //如果用本端套接字接收一个连接的远端套接字发送的数据包失败。
                         {
                             String p_InfoStrPt = "用本端套接字接收一个连接的远端套接字发送的数据包失败。原因：" + m_ErrInfoVstrPt.GetStr();
-                            if (m_IsPrintLogcat != 0) Log.e(m_CurClsNameStrPt, p_InfoStrPt);
-                            Message p_MessagePt = new Message();
-                            p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                            p_MessagePt.obj = p_InfoStrPt;
-                            m_MainActivityHandlerPt.sendMessage(p_MessagePt);
+                            toSendMessage(p_InfoStrPt);
                             break OutExitPkt;
                         }
                     }
@@ -1168,11 +833,7 @@ public class MyMediaPocsThrd extends MediaPocsThrd {
             }
 
             String p_InfoStrPt = "中断对讲。";
-            if (m_IsPrintLogcat != 0) Log.i(m_CurClsNameStrPt, p_InfoStrPt);
-            Message p_MessagePt = new Message();
-            p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-            p_MessagePt.obj = p_InfoStrPt;
-            m_MainActivityHandlerPt.sendMessage(p_MessagePt);
+            toSendMessage1(p_InfoStrPt);
             if (m_IsShowToast != 0) m_ShowToastActivityPt.runOnUiThread(new Runnable() {
                 public void run() {
                     Toast.makeText(m_ShowToastActivityPt, p_InfoStrPt, Toast.LENGTH_LONG).show();
@@ -1186,11 +847,7 @@ public class MyMediaPocsThrd extends MediaPocsThrd {
             mTalkNetwork.m_TcpSrvrSoktPt = null;
 
             String p_InfoStrPt = "关闭并销毁本端TCP协议服务端套接字成功。";
-            if (m_IsPrintLogcat != 0) Log.i(m_CurClsNameStrPt, p_InfoStrPt);
-            Message p_MessagePt = new Message();
-            p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-            p_MessagePt.obj = p_InfoStrPt;
-            m_MainActivityHandlerPt.sendMessage(p_MessagePt);
+            toSendMessage1(p_InfoStrPt);
         }
 
         //销毁本端TCP协议客户端套接字。
@@ -1199,11 +856,7 @@ public class MyMediaPocsThrd extends MediaPocsThrd {
             mTalkNetwork.m_TcpClntSoktPt = null;
 
             String p_InfoStrPt = "关闭并销毁本端TCP协议客户端套接字成功。";
-            if (m_IsPrintLogcat != 0) Log.i(m_CurClsNameStrPt, p_InfoStrPt);
-            Message p_MessagePt = new Message();
-            p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-            p_MessagePt.obj = p_InfoStrPt;
-            m_MainActivityHandlerPt.sendMessage(p_MessagePt);
+            toSendMessage1(p_InfoStrPt);
         }
 
         //销毁本端高级UDP协议套接字。
@@ -1213,11 +866,7 @@ public class MyMediaPocsThrd extends MediaPocsThrd {
             mTalkNetwork.m_AudpCnctIdx = null;
 
             String p_InfoStrPt = "关闭并销毁本端高级UDP协议套接字成功。";
-            if (m_IsPrintLogcat != 0) Log.i(m_CurClsNameStrPt, p_InfoStrPt);
-            Message p_MessagePt = new Message();
-            p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-            p_MessagePt.obj = p_InfoStrPt;
-            m_MainActivityHandlerPt.sendMessage(p_MessagePt);
+            toSendMessage1(p_InfoStrPt);
         }
 
         //销毁接收音频输出帧的链表。
@@ -1255,7 +904,7 @@ public class MyMediaPocsThrd extends MediaPocsThrd {
                 if (m_IsPrintLogcat != 0) Log.i(m_CurClsNameStrPt, p_InfoStrPt);
                 {
                     Message p_MessagePt = new Message();
-                    p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
+                    p_MessagePt.what = Msg.ShowLog.ordinal();
                     p_MessagePt.obj = p_InfoStrPt;
                     m_MainActivityHandlerPt.sendMessage(p_MessagePt);
                 }
@@ -1263,12 +912,12 @@ public class MyMediaPocsThrd extends MediaPocsThrd {
                 RqirExit(2, 0); //请求重启。
                 {
                     Message p_MessagePt = new Message();
-                    p_MessagePt.what = MainActivityHandler.Msg.Vibrate.ordinal();
+                    p_MessagePt.what = Msg.Vibrate.ordinal();
                     m_MainActivityHandlerPt.sendMessage(p_MessagePt);
                 } //向主界面发送振动的消息。
                 if (mTalkNetwork.m_XfrMode == 0) {
                     Message p_MessagePt = new Message();
-                    p_MessagePt.what = MainActivityHandler.Msg.PttBtnDstoy.ordinal();
+                    p_MessagePt.what = Msg.PttBtnDstoy.ordinal();
                     m_MainActivityHandlerPt.sendMessage(p_MessagePt);
                 } //向主界面发送销毁一键即按即通按钮的消息。
             } else if ((m_IsInterrupt == 0) && (m_ExitCode == ExitCode.UserInit) && (m_RqstCnctRslt == 2)) {
@@ -1276,7 +925,7 @@ public class MyMediaPocsThrd extends MediaPocsThrd {
                 if (m_IsPrintLogcat != 0) Log.i(m_CurClsNameStrPt, p_InfoStrPt);
                 {
                     Message p_MessagePt = new Message();
-                    p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
+                    p_MessagePt.what = Msg.ShowLog.ordinal();
                     p_MessagePt.obj = p_InfoStrPt;
                     m_MainActivityHandlerPt.sendMessage(p_MessagePt);
                 }
@@ -1284,12 +933,12 @@ public class MyMediaPocsThrd extends MediaPocsThrd {
                 RqirExit(2, 0); //请求重启。
                 {
                     Message p_MessagePt = new Message();
-                    p_MessagePt.what = MainActivityHandler.Msg.Vibrate.ordinal();
+                    p_MessagePt.what = Msg.Vibrate.ordinal();
                     m_MainActivityHandlerPt.sendMessage(p_MessagePt);
                 } //向主界面发送振动的消息。
                 if (mTalkNetwork.m_XfrMode == 0) {
                     Message p_MessagePt = new Message();
-                    p_MessagePt.what = MainActivityHandler.Msg.PttBtnDstoy.ordinal();
+                    p_MessagePt.what = Msg.PttBtnDstoy.ordinal();
                     m_MainActivityHandlerPt.sendMessage(p_MessagePt);
                 } //向主界面发送销毁一键即按即通按钮的消息。
             } else if ((m_IsInterrupt == 0) && ((m_ExitCode == ExitCode.MediaMsgPocs) || (m_ExitCode == ExitCode.AdoVdoInptOtptPocs))) {
@@ -1297,7 +946,7 @@ public class MyMediaPocsThrd extends MediaPocsThrd {
                 if (m_IsPrintLogcat != 0) Log.i(m_CurClsNameStrPt, p_InfoStrPt);
                 {
                     Message p_MessagePt = new Message();
-                    p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
+                    p_MessagePt.what = Msg.ShowLog.ordinal();
                     p_MessagePt.obj = p_InfoStrPt;
                     m_MainActivityHandlerPt.sendMessage(p_MessagePt);
                 }
@@ -1305,29 +954,29 @@ public class MyMediaPocsThrd extends MediaPocsThrd {
                 RqirExit(2, 0); //请求重启。
                 {
                     Message p_MessagePt = new Message();
-                    p_MessagePt.what = MainActivityHandler.Msg.Vibrate.ordinal();
+                    p_MessagePt.what = Msg.Vibrate.ordinal();
                     m_MainActivityHandlerPt.sendMessage(p_MessagePt);
                 } //向主界面发送振动的消息。
                 if (mTalkNetwork.m_XfrMode == 0) {
                     Message p_MessagePt = new Message();
-                    p_MessagePt.what = MainActivityHandler.Msg.PttBtnDstoy.ordinal();
+                    p_MessagePt.what = Msg.PttBtnDstoy.ordinal();
                     m_MainActivityHandlerPt.sendMessage(p_MessagePt);
                 } //向主界面发送销毁一键即按即通按钮的消息。
             } else //其他情况，本线程直接退出。
             {
                 {
                     Message p_MessagePt = new Message();
-                    p_MessagePt.what = MainActivityHandler.Msg.MediaPocsThrdDstoy.ordinal();
+                    p_MessagePt.what = Msg.MediaPocsThrdDstoy.ordinal();
                     m_MainActivityHandlerPt.sendMessage(p_MessagePt);
                 } //向主界面发送销毁媒体处理线程的消息。
                 {
                     Message p_MessagePt = new Message();
-                    p_MessagePt.what = MainActivityHandler.Msg.Vibrate.ordinal();
+                    p_MessagePt.what = Msg.Vibrate.ordinal();
                     m_MainActivityHandlerPt.sendMessage(p_MessagePt);
                 } //向主界面发送振动的消息。
                 if (mTalkNetwork.m_XfrMode == 0) {
                     Message p_MessagePt = new Message();
-                    p_MessagePt.what = MainActivityHandler.Msg.PttBtnDstoy.ordinal();
+                    p_MessagePt.what = Msg.PttBtnDstoy.ordinal();
                     m_MainActivityHandlerPt.sendMessage(p_MessagePt);
                 } //向主界面发送销毁一键即按即通按钮的消息。
             }
@@ -1338,7 +987,7 @@ public class MyMediaPocsThrd extends MediaPocsThrd {
                 if (m_IsPrintLogcat != 0) Log.i(m_CurClsNameStrPt, p_InfoStrPt);
                 {
                     Message p_MessagePt = new Message();
-                    p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
+                    p_MessagePt.what = Msg.ShowLog.ordinal();
                     p_MessagePt.obj = p_InfoStrPt;
                     m_MainActivityHandlerPt.sendMessage(p_MessagePt);
                 }
@@ -1346,24 +995,24 @@ public class MyMediaPocsThrd extends MediaPocsThrd {
                 RqirExit(2, 0); //请求重启。
                 if (mTalkNetwork.m_XfrMode == 0) {
                     Message p_MessagePt = new Message();
-                    p_MessagePt.what = MainActivityHandler.Msg.PttBtnDstoy.ordinal();
+                    p_MessagePt.what = Msg.PttBtnDstoy.ordinal();
                     m_MainActivityHandlerPt.sendMessage(p_MessagePt);
                 } //向主界面发送销毁一键即按即通按钮的消息。
             } else //其他情况，本线程直接退出。
             {
                 {
                     Message p_MessagePt = new Message();
-                    p_MessagePt.what = MainActivityHandler.Msg.MediaPocsThrdDstoy.ordinal();
+                    p_MessagePt.what = Msg.MediaPocsThrdDstoy.ordinal();
                     m_MainActivityHandlerPt.sendMessage(p_MessagePt);
                 } //向主界面发送销毁媒体处理线程的消息。
                 {
                     Message p_MessagePt = new Message();
-                    p_MessagePt.what = MainActivityHandler.Msg.Vibrate.ordinal();
+                    p_MessagePt.what = Msg.Vibrate.ordinal();
                     m_MainActivityHandlerPt.sendMessage(p_MessagePt);
                 } //向主界面发送振动的消息。
                 if (mTalkNetwork.m_XfrMode == 0) {
                     Message p_MessagePt = new Message();
-                    p_MessagePt.what = MainActivityHandler.Msg.PttBtnDstoy.ordinal();
+                    p_MessagePt.what = Msg.PttBtnDstoy.ordinal();
                     m_MainActivityHandlerPt.sendMessage(p_MessagePt);
                 } //向主界面发送销毁一键即按即通按钮的消息。
             }
@@ -1532,11 +1181,7 @@ public class MyMediaPocsThrd extends MediaPocsThrd {
                         if (((mTalkNetwork.m_UseWhatXfrPrtcl == 0) && (mTalkNetwork.m_TcpClntSoktPt.SendApkt(m_TmpBytePt, 2, (short) 0, 1, 0, m_ErrInfoVstrPt) != 0)) ||
                                 ((mTalkNetwork.m_UseWhatXfrPrtcl == 1) && (mTalkNetwork.m_AudpSoktPt.SendApkt(mTalkNetwork.m_AudpCnctIdx.m_Val, m_TmpBytePt, 2, 10, m_ErrInfoVstrPt) != 0))) {
                             String p_InfoStrPt = "发送一个对讲模式包失败。原因：" + m_ErrInfoVstrPt.GetStr();
-                            if (m_IsPrintLogcat != 0) Log.e(m_CurClsNameStrPt, p_InfoStrPt);
-                            Message p_MessagePt = new Message();
-                            p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                            p_MessagePt.obj = p_InfoStrPt;
-                            m_MainActivityHandlerPt.sendMessage(p_MessagePt);
+                            toSendMessage(p_InfoStrPt);
                             break Out;
                         } else {
                             if (m_IsPrintLogcat != 0)
@@ -1556,7 +1201,7 @@ public class MyMediaPocsThrd extends MediaPocsThrd {
                     SetTkbkMode(); //设置对讲模式。
                     {
                         Message p_MessagePt = new Message();
-                        p_MessagePt.what = MainActivityHandler.Msg.Vibrate.ordinal();
+                        p_MessagePt.what = Msg.Vibrate.ordinal();
                         m_MainActivityHandlerPt.sendMessage(p_MessagePt);
                     } //向主界面发送振动的消息。
                     break;
@@ -1631,11 +1276,7 @@ public class MyMediaPocsThrd extends MediaPocsThrd {
                         Log.i(m_CurClsNameStrPt, "发送一个有语音活动的音频输入帧包成功。音频输入帧时间戳：" + m_LastSendAdoInptFrmTimeStamp + "，总长度：" + p_FrmPktLen + "。");
                 } else {
                     String p_InfoStrPt = "发送一个有语音活动的音频输入帧包失败。原因：" + m_ErrInfoVstrPt.GetStr() + "音频输入帧时间戳：" + m_LastSendAdoInptFrmTimeStamp + "，总长度：" + p_FrmPktLen + "。";
-                    if (m_IsPrintLogcat != 0) Log.e(m_CurClsNameStrPt, p_InfoStrPt);
-                    Message p_MessagePt = new Message();
-                    p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                    p_MessagePt.obj = p_InfoStrPt;
-                    m_MainActivityHandlerPt.sendMessage(p_MessagePt);
+                    toSendMessage(p_InfoStrPt);
                 }
 
                 m_LastSendAdoInptFrmIsAct = 1; //设置最后一个发送的音频输入帧有语音活动。
@@ -1659,11 +1300,7 @@ public class MyMediaPocsThrd extends MediaPocsThrd {
                             Log.i(m_CurClsNameStrPt, "发送一个无语音活动的音频输入帧包成功。音频输入帧时间戳：" + m_LastSendAdoInptFrmTimeStamp + "，总长度：" + p_FrmPktLen + "。");
                     } else {
                         String p_InfoStrPt = "发送一个无语音活动的音频输入帧包失败。原因：" + m_ErrInfoVstrPt.GetStr() + "音频输入帧时间戳：" + m_LastSendAdoInptFrmTimeStamp + "，总长度：" + p_FrmPktLen + "。";
-                        if (m_IsPrintLogcat != 0) Log.e(m_CurClsNameStrPt, p_InfoStrPt);
-                        Message p_MessagePt = new Message();
-                        p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                        p_MessagePt.obj = p_InfoStrPt;
-                        m_MainActivityHandlerPt.sendMessage(p_MessagePt);
+                        toSendMessage(p_InfoStrPt);
                     }
 
                     m_LastSendAdoInptFrmIsAct = 0; //设置最后一个发送的音频输入帧无语音活动。
@@ -1722,11 +1359,7 @@ public class MyMediaPocsThrd extends MediaPocsThrd {
                         Log.i(m_CurClsNameStrPt, "发送一个有图像活动的视频输入帧包成功。视频输入帧时间戳：" + m_LastSendVdoInptFrmTimeStamp + "，总长度：" + p_FrmPktLen + "，类型：" + (m_TmpBytePt[9] & 0xff) + "。");
                 } else {
                     String p_InfoStrPt = "发送一个有图像活动的视频输入帧包失败。视频输入帧时间戳：" + m_LastSendVdoInptFrmTimeStamp + "，总长度：" + p_FrmPktLen + "，类型：" + (m_TmpBytePt[9] & 0xff) + "。原因：" + m_ErrInfoVstrPt.GetStr() + "。";
-                    if (m_IsPrintLogcat != 0) Log.e(m_CurClsNameStrPt, p_InfoStrPt);
-                    Message p_MessagePt = new Message();
-                    p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-                    p_MessagePt.obj = p_InfoStrPt;
-                    m_MainActivityHandlerPt.sendMessage(p_MessagePt);
+                    toSendMessage(p_InfoStrPt);
                 }
             } else //如果本次视频输入帧为无图像活动，无需发送。
             {

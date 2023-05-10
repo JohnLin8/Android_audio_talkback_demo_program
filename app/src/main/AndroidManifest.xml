@@ -23,6 +23,7 @@
         android:theme="@style/AppTheme">
         <activity
             android:name=".VideoTalkActivity"
+            android:launchMode="singleTask"
             android:exported="false"/>
 
         <activity
