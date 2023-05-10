@@ -1,7 +1,8 @@
 package com.example.andrd_ado_vdo_tkbk_demo;
 
-import static com.example.andrd_ado_vdo_tkbk_demo.MainActivityHandler.*;
 
+
+import android.app.Activity;
 import android.os.Handler;
 import android.os.Message;
 import android.os.SystemClock;
@@ -17,7 +18,7 @@ import HeavenTao.Sokt.*;
 
 //我的媒体处理线程。
 public class MyMediaPocsThrd extends MediaPocsThrd {
-    MainActivity m_MainActivityPt; //存放主界面的指针。
+    Activity m_MainActivityPt; //存放主界面的指针。
     Handler m_MainActivityHandlerPt; //存放主界面消息处理的指针。
     public int m_IsInterrupt; //存放是否中断，为0表示未中断，为1表示已中断。
     private Message p_messagePt;
@@ -27,7 +28,6 @@ public class MyMediaPocsThrd extends MediaPocsThrd {
         String m_IPAddrStrPt; //存放IP地址字符串的指针。
         String m_PortStrPt; //存放端口字符串的指针。
         int m_XfrMode;     //存放传输模式，为0表示实时半双工（一键通），为1表示实时全双工。
-        int m_PttBtnIsDown; //存放一键即按即通按钮是否按下，为0表示弹起，为非0表示按下。
         int m_MaxCnctTimes; //存放最大连接次数，取值区间为[1,2147483647]。
         int m_UseWhatXfrPrtcl; //存放使用什么传输协议，为0表示TCP协议，为1表示UDP协议。
         int m_IsCreateSrvrOrClnt;  //存放创建服务端或者客户端标记，为1表示创建服务端，为0表示创建客户端。
@@ -109,11 +109,11 @@ public class MyMediaPocsThrd extends MediaPocsThrd {
     {
         LclTkbkMode, //本端对讲模式。
         RmtTkbkMode, //远端对讲模式。
-        PttBtnDown, //一键即按即通按钮按下。
-        PttBtnUp, //一键即按即通按钮弹起。
+        PttBtnDown,  //一键即按即通按钮按下。
+        PttBtnUp,    //一键即按即通按钮弹起。
     }
 
-    MyMediaPocsThrd(MainActivity MainActivityPt, Handler MainActivityHandlerPt) {
+    MyMediaPocsThrd(Activity MainActivityPt, Handler MainActivityHandlerPt) {
         super(MainActivityPt);
 
         m_MainActivityPt = MainActivityPt; //设置主界面的指针。
@@ -125,8 +125,10 @@ public class MyMediaPocsThrd extends MediaPocsThrd {
     }
 
     //用户定义的初始化函数。
+
     /**
      * 用户定义的初始化函数。
+     *
      * @return 为0表示成功，为非0表示失败
      */
     @Override
@@ -496,12 +498,6 @@ public class MyMediaPocsThrd extends MediaPocsThrd {
             });
         }
 
-        {
-            Message p_MessagePt = new Message();
-            p_MessagePt.what = Msg.Vibrate.ordinal();
-            m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-        } //向主界面发送振动的消息。
-
         //不用”一键即按即通“
 
         SendUserMsg(UserMsgTyp.LclTkbkMode, TkbkMode.NoChg); //发送对讲模式包。
@@ -783,7 +779,11 @@ public class MyMediaPocsThrd extends MediaPocsThrd {
     //用户定义的销毁函数。
     @Override
     public void UserDstoy() {
-        if ((mTalkNetwork.m_TcpClntSoktPt != null) || ((mTalkNetwork.m_AudpSoktPt != null) && (mTalkNetwork.m_AudpSoktPt.GetRmtAddr(mTalkNetwork.m_AudpCnctIdx.m_Val, null, null, null, null) == 0))) //如果本端TCP协议客户端套接字不为空或本端高级UDP协议套接字不为空且已连接远端。
+        if ((mTalkNetwork.m_TcpClntSoktPt != null)
+                || ((mTalkNetwork.m_AudpSoktPt != null)
+                && (mTalkNetwork.m_AudpSoktPt.GetRmtAddr(mTalkNetwork.m_AudpCnctIdx.m_Val,
+                null, null, null, null) == 0)))
+            //如果本端TCP协议客户端套接字不为空或本端高级UDP协议套接字不为空且已连接远端。
         {
             OutExitPkt:
             {
@@ -932,9 +932,7 @@ public class MyMediaPocsThrd extends MediaPocsThrd {
 
                 RqirExit(2, 0); //请求重启。
                 {
-                    Message p_MessagePt = new Message();
-                    p_MessagePt.what = Msg.Vibrate.ordinal();
-                    m_MainActivityHandlerPt.sendMessage(p_MessagePt);
+                    toSendMessage6();
                 } //向主界面发送振动的消息。
                 if (mTalkNetwork.m_XfrMode == 0) {
                     Message p_MessagePt = new Message();
@@ -1019,204 +1017,23 @@ public class MyMediaPocsThrd extends MediaPocsThrd {
         }
     }
 
+    private void toSendMessage6() {
+        Message p_MessagePt = new Message();
+        p_MessagePt.what = Msg.Vibrate.ordinal();
+        m_MainActivityHandlerPt.sendMessage(p_MessagePt);
+    }
+
     //设置对讲模式。
     public void SetTkbkMode() {
-        if (mTalkNetwork.m_XfrMode == 0) //如果传输模式为实时半双工（一键通）。
-        {
-            if (mTalkNetwork.m_PttBtnIsDown == 0) //如果一键即按即通按钮为弹起。
-            {
-                switch (m_LclTkbkMode) {
-                    case None: //如果本端对讲模式为空。
-                    {
-                        SetIsUseAdoVdoInptOtpt(0, 0, 0, 0); //设置是否使用音视频输入输出。
-                        break;
-                    }
-                    case Ado: //如果本端对讲模式为音频。
-                    {
-                        SetIsUseAdoVdoInptOtpt(0, 1, 0, 0); //设置是否使用音视频输入输出。
-                        break;
-                    }
-                    case Vdo: //如果本端对讲模式为视频。
-                    {
-                        SetIsUseAdoVdoInptOtpt(0, 0, 0, 1); //设置是否使用音视频输入输出。
-                        break;
-                    }
-                    case AdoVdo: //如果本端对讲模式为音视频。
-                    {
-                        SetIsUseAdoVdoInptOtpt(0, 1, 0, 1); //设置是否使用音视频输入输出。
-                        break;
-                    }
-                }
-            } else //如果一键即按即通按钮为按下。
-            {
-                switch (m_LclTkbkMode) {
-                    case None: //如果本端对讲模式为空。
-                    {
-                        SetIsUseAdoVdoInptOtpt(0, 0, 0, 0); //设置是否使用音视频输入输出。
-                        break;
-                    }
-                    case Ado: //如果本端对讲模式为音频。
-                    {
-                        SetIsUseAdoVdoInptOtpt(1, 0, 0, 0); //设置是否使用音视频输入输出。
-                        break;
-                    }
-                    case Vdo: //如果本端对讲模式为视频。
-                    {
-                        SetIsUseAdoVdoInptOtpt(0, 0, 1, 0); //设置是否使用音视频输入输出。
-                        break;
-                    }
-                    case AdoVdo: //如果本端对讲模式为音视频。
-                    {
-                        SetIsUseAdoVdoInptOtpt(1, 0, 1, 0); //设置是否使用音视频输入输出。
-                        break;
-                    }
-                }
-            }
-        } else //如果传输模式为实时全双工。
-        {
-            switch (m_LclTkbkMode) {
-                case None: //如果本端对讲模式为空。
-                {
-                    SetIsUseAdoVdoInptOtpt(0, 0, 0, 0); //设置是否使用音视频输入输出。
-                    break;
-                }
-                case Ado: //如果本端对讲模式为音频。
-                {
-                    switch (m_RmtTkbkMode) {
-                        case None: //如果远端对讲模式为空。
-                        {
-                            SetIsUseAdoVdoInptOtpt(1, 0, 0, 0); //设置是否使用音视频输入输出。
-                            break;
-                        }
-                        case Ado: //如果远端对讲模式为音频。
-                        {
-                            SetIsUseAdoVdoInptOtpt(1, 1, 0, 0); //设置是否使用音视频输入输出。
-                            break;
-                        }
-                        case Vdo: //如果远端对讲模式为视频。
-                        {
-                            SetIsUseAdoVdoInptOtpt(1, 0, 0, 0); //设置是否使用音视频输入输出。
-                            break;
-                        }
-                        case AdoVdo: //如果远端对讲模式为音视频。
-                        {
-                            SetIsUseAdoVdoInptOtpt(1, 1, 0, 0); //设置是否使用音视频输入输出。
-                            break;
-                        }
-                    }
-                    break;
-                }
-                case Vdo: //如果本端对讲模式为视频。
-                {
-                    switch (m_RmtTkbkMode) {
-                        case None: //如果远端对讲模式为空。
-                        {
-                            SetIsUseAdoVdoInptOtpt(0, 0, 1, 0); //设置是否使用音视频输入输出。
-                            break;
-                        }
-                        case Ado: //如果远端对讲模式为音频。
-                        {
-                            SetIsUseAdoVdoInptOtpt(0, 0, 1, 0); //设置是否使用音视频输入输出。
-                            break;
-                        }
-                        case Vdo: //如果远端对讲模式为视频。
-                        {
-                            SetIsUseAdoVdoInptOtpt(0, 0, 1, 1); //设置是否使用音视频输入输出。
-                            break;
-                        }
-                        case AdoVdo: //如果远端对讲模式为音视频。
-                        {
-                            SetIsUseAdoVdoInptOtpt(0, 0, 1, 1); //设置是否使用音视频输入输出。
-                            break;
-                        }
-                    }
-                    break;
-                }
-                case AdoVdo: //如果本端对讲模式为音视频。
-                {
-                    switch (m_RmtTkbkMode) {
-                        case None: //如果远端对讲模式为空。
-                        {
-                            SetIsUseAdoVdoInptOtpt(1, 0, 1, 0); //设置是否使用音视频输入输出。
-                            break;
-                        }
-                        case Ado: //如果远端对讲模式为音频。
-                        {
-                            SetIsUseAdoVdoInptOtpt(1, 1, 1, 0); //设置是否使用音视频输入输出。
-                            break;
-                        }
-                        case Vdo: //如果远端对讲模式为视频。
-                        {
-                            SetIsUseAdoVdoInptOtpt(1, 0, 1, 1); //设置是否使用音视频输入输出。
-                            break;
-                        }
-                        case AdoVdo: //如果远端对讲模式为音视频。
-                        {
-                            SetIsUseAdoVdoInptOtpt(1, 1, 1, 1); //设置是否使用音视频输入输出。
-                            break;
-                        }
-                    }
-                    break;
-                }
-            }
-        }
+        //如果传输模式为实时全双工。
+        SetIsUseAdoVdoInptOtpt(1, 1, 1, 1);  //设置是否使用音视频输入输出。
     }
 
     //用户定义的消息函数。
     public int UserMsg(Object MsgArgPt[]) {
-        int p_Rslt = -1; //存放本函数执行结果的值，为0表示成功，为非0表示失败。
 
-        Out:
-        {
-            switch ((UserMsgTyp) MsgArgPt[0]) {
-                case LclTkbkMode: {
-                    if ((TkbkMode) MsgArgPt[1] != TkbkMode.NoChg)
-                        m_LclTkbkMode = (TkbkMode) MsgArgPt[1]; //设置本端对讲模式。
-                    SetTkbkMode(); //设置对讲模式。
-                    if ((mTalkNetwork.m_TcpClntSoktPt != null) || ((mTalkNetwork.m_AudpSoktPt != null) && (mTalkNetwork.m_AudpSoktPt.GetRmtAddr(mTalkNetwork.m_AudpCnctIdx.m_Val, null, null, null, null) == 0))) //如果本端TCP协议客户端套接字不为空或本端高级UDP协议套接字不为空且已连接远端。
-                    {
-                        //发送对讲模式包。
-                        m_TmpBytePt[0] = (byte) PktTyp.TkbkMode.ordinal(); //设置对讲模式包。
-                        m_TmpBytePt[1] = (byte) m_LclTkbkMode.ordinal(); //设置对讲模式。
-                        if (((mTalkNetwork.m_UseWhatXfrPrtcl == 0) && (mTalkNetwork.m_TcpClntSoktPt.SendApkt(m_TmpBytePt, 2, (short) 0, 1, 0, m_ErrInfoVstrPt) != 0)) ||
-                                ((mTalkNetwork.m_UseWhatXfrPrtcl == 1) && (mTalkNetwork.m_AudpSoktPt.SendApkt(mTalkNetwork.m_AudpCnctIdx.m_Val, m_TmpBytePt, 2, 10, m_ErrInfoVstrPt) != 0))) {
-                            String p_InfoStrPt = "发送一个对讲模式包失败。原因：" + m_ErrInfoVstrPt.GetStr();
-                            toSendMessage(p_InfoStrPt);
-                            break Out;
-                        } else {
-                            if (m_IsPrintLogcat != 0)
-                                Log.i(m_CurClsNameStrPt, "发送一个对讲模式包成功。对讲模式：" + m_LclTkbkMode);
-                        }
-                    }
-                    break;
-                }
-                case RmtTkbkMode: {
-                    if ((TkbkMode) MsgArgPt[1] != TkbkMode.NoChg)
-                        m_RmtTkbkMode = (TkbkMode) MsgArgPt[1]; //设置远端对讲模式。
-                    SetTkbkMode(); //设置对讲模式。
-                    break;
-                }
-                case PttBtnDown: {
-                    mTalkNetwork.m_PttBtnIsDown = 1; //设置一键即按即通按钮为按下。
-                    SetTkbkMode(); //设置对讲模式。
-                    {
-                        Message p_MessagePt = new Message();
-                        p_MessagePt.what = Msg.Vibrate.ordinal();
-                        m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-                    } //向主界面发送振动的消息。
-                    break;
-                }
-                case PttBtnUp: {
-                    mTalkNetwork.m_PttBtnIsDown = 0; //设置一键即按即通按钮为弹起。
-                    SetTkbkMode(); //设置对讲模式。
-                    break;
-                }
-            }
-
-            p_Rslt = 0; //设置本函数执行成功。
-        }
-
-        return p_Rslt;
+        SetTkbkMode(); //设置对讲模式。
+        return 0;
     }
 
     //用户定义的读取音视频输入帧函数。

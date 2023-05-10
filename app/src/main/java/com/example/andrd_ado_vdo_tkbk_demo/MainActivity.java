@@ -47,130 +47,6 @@ import java.util.Enumeration;
 
 import HeavenTao.Media.*;
 
-//主界面消息处理。
-class MainActivityHandler extends Handler {
-    static String m_CurClsNameStrPt = "MainActivityHandler"; //当前类名称字符串的指针。
-
-    MainActivity m_MainActivityPt; //存放主界面的指针。
-    ServiceConnection m_FrgndSrvcCnctPt; //存放前台服务连接器的指针。
-    AlertDialog m_RqstCnctDlgPt; //存放请求连接对话框的指针。
-
-    public enum Msg {
-        MediaPocsThrdInit, //主界面消息：初始化媒体处理线程。
-        MediaPocsThrdDstoy, //主界面消息：销毁媒体处理线程。
-        RqstCnctDlgInit, //主界面消息：初始化请求连接对话框。
-        RqstCnctDlgDstoy, //主界面消息：销毁请求连接对话框。
-        PttBtnInit,  //主界面消息：初始化一键即按即通按钮。
-        PttBtnDstoy, //主界面消息：销毁一键即按即通按钮。
-        ShowLog, //主界面消息：显示日志。
-        Vibrate, //主界面消息：振动。
-    }
-
-    /**
-     * function: just make buttons enable or disable, no other operations. ---- by JohnLin
-     *
-     * @param MessagePt 消息。
-     */
-    public void handleMessage(Message MessagePt) {
-        switch (Msg.values()[MessagePt.what]) {
-            case MediaPocsThrdInit: {
-
-                //创建并绑定前台服务，从而确保本进程在转入后台或系统锁屏时不会被系统限制运行，且只能放在主线程中执行，因为要使用界面。
-                if (m_FrgndSrvcCnctPt == null) {  //这里有个是否前台服务判断，先固定使用前台服务 ---- by JohnLin
-                    m_FrgndSrvcCnctPt = new ServiceConnection() //创建存放前台服务连接器。
-                    {
-                        @Override
-                        public void onServiceConnected(ComponentName name, IBinder service) //前台服务绑定成功。
-                        {
-                            ((FrgndSrvc.FrgndSrvcBinder) service).SetForeground(m_MainActivityPt); //将服务设置为前台服务。
-                        }
-
-                        @Override
-                        public void onServiceDisconnected(ComponentName name) //前台服务解除绑定。
-                        {
-
-                        }
-                    };
-                    m_MainActivityPt.bindService(new Intent(m_MainActivityPt, FrgndSrvc.class), m_FrgndSrvcCnctPt, Context.BIND_AUTO_CREATE); //创建并绑定前台服务。
-                }
-                break;
-            }
-            case MediaPocsThrdDstoy: {
-                m_MainActivityPt.m_MyMediaPocsThrdPt = null;
-
-                if (m_FrgndSrvcCnctPt != null) //如果已经创建并绑定了前台服务。
-                {
-                    m_MainActivityPt.unbindService(m_FrgndSrvcCnctPt); //解除绑定并销毁前台服务。
-                    m_FrgndSrvcCnctPt = null;
-                }
-
-                break;
-            }
-            case RqstCnctDlgInit: {
-                AlertDialog.Builder builder = new AlertDialog.Builder(m_MainActivityPt);
-
-                builder.setCancelable(false); //点击对话框以外的区域是否让对话框消失
-                builder.setTitle(R.string.app_name);
-
-                if (m_MainActivityPt.m_MyMediaPocsThrdPt.mTalkNetwork.m_IsCreateSrvrOrClnt == 1) //如果是创建服务端。
-                {
-                    builder.setMessage("您是否允许远端[" + MessagePt.obj + "]的连接？");
-
-                    //设置正面按钮。
-                    builder.setPositiveButton("允许", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            m_MainActivityPt.m_MyMediaPocsThrdPt.m_RqstCnctRslt = 1;
-                            m_RqstCnctDlgPt = null;
-                        }
-                    });
-                    //设置反面按钮。
-                    builder.setNegativeButton("拒绝", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            m_MainActivityPt.m_MyMediaPocsThrdPt.m_RqstCnctRslt = 2;
-                            m_RqstCnctDlgPt = null;
-                        }
-                    });
-                } else //如果是创建客户端。
-                {
-                    builder.setMessage("等待远端[" + MessagePt.obj + "]允许您的连接...");
-
-                    //设置反面按钮。
-                    builder.setNegativeButton("中断", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            m_MainActivityPt.m_MyMediaPocsThrdPt.m_RqstCnctRslt = 2;
-                            m_RqstCnctDlgPt = null;
-                        }
-                    });
-                }
-
-                m_RqstCnctDlgPt = builder.create(); //创建AlertDialog对象。
-                m_RqstCnctDlgPt.show();
-                break;
-            }
-            case RqstCnctDlgDstoy: {
-                if (m_RqstCnctDlgPt != null) {
-                    m_RqstCnctDlgPt.cancel();
-                    m_RqstCnctDlgPt = null;
-                }
-                break;
-            }
-            case ShowLog: {
-                TextView p_LogTextView = new TextView(m_MainActivityPt);
-                p_LogTextView.setText((new SimpleDateFormat("HH:mm:ss SSS")).format(new Date()) + "：" + MessagePt.obj);
-                ((LinearLayout) m_MainActivityPt.m_MainLyotViewPt.findViewById(R.id.LogLinearLyotId)).addView(p_LogTextView);
-                break;
-            }
-            case Vibrate: {
-                ((Vibrator) m_MainActivityPt.getSystemService(Context.VIBRATOR_SERVICE)).vibrate(50);
-                break;
-            }
-        }
-    }
-}
-
 //主界面。
 public class MainActivity extends AppCompatActivity {
     String m_CurClsNameStrPt = this.getClass().getSimpleName(); //存放当前类名称字符串。
@@ -179,7 +55,7 @@ public class MainActivity extends AppCompatActivity {
 
     View m_CurActivityLyotViewPt; //存放当前界面布局视图的指针。
     MyMediaPocsThrd m_MyMediaPocsThrdPt; //存放媒体处理线程的指针。
-    MainActivityHandler m_MainActivityHandlerPt; //存放主界面消息处理的指针。
+//    MainActivityHandler m_MainActivityHandlerPt; //存放主界面消息处理的指针。
 
     String m_ExternalDirFullAbsPathStrPt; //存放扩展目录完整绝对路径字符串的指针。
 
@@ -203,13 +79,41 @@ public class MainActivity extends AppCompatActivity {
 
 
         //初始化消息处理。
-        m_MainActivityHandlerPt = new MainActivityHandler();
-        m_MainActivityHandlerPt.m_MainActivityPt = this;
+//        m_MainActivityHandlerPt = new MainActivityHandler();
+//        m_MainActivityHandlerPt.m_MainActivityPt = this;
 
+        getIpAddr();
+
+
+        //设置默认设置
+        //TODO: 效果等级
+//        OnClickUseEffectSuperRdBtn(null);   //默认效果等级：超。
+//        OnClickUseBitrateSuperRdBtn(null);  //默认比特率等级：超。
+
+//        getExternalDirPath();
+    }
+
+//    private void getExternalDirPath() {
+//        //获取扩展目录完整绝对路径字符串。
+//        {
+//            if (getExternalFilesDir(null) != null) {
+//                m_ExternalDirFullAbsPathStrPt = getExternalFilesDir(null).getPath();
+//            } else {
+//                m_ExternalDirFullAbsPathStrPt = Environment.getExternalStorageDirectory().getPath() + "/Android/data/" + getApplicationContext().getPackageName();
+//            }
+//
+//            String p_InfoStrPt = "扩展目录完整绝对路径：" + m_ExternalDirFullAbsPathStrPt;
+//            Log.i(m_CurClsNameStrPt, p_InfoStrPt);
+//            Message p_MessagePt = new Message();
+//            p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
+//            p_MessagePt.obj = p_InfoStrPt;
+//            m_MainActivityHandlerPt.sendMessage(p_MessagePt);
+//        }
+//    }
+
+    private String getIpAddr() {
         //设置IP地址编辑框的内容。
         try {
-            OutSetIPAddrEdit:
-            {
                 //遍历所有的网络接口设备。
                 for (Enumeration<NetworkInterface> clEnumerationNetworkInterface = NetworkInterface.getNetworkInterfaces(); clEnumerationNetworkInterface.hasMoreElements(); ) {
                     NetworkInterface clNetworkInterface = clEnumerationNetworkInterface.nextElement();
@@ -220,39 +124,15 @@ public class MainActivity extends AppCompatActivity {
                             InetAddress clInetAddress = enumIpAddr.nextElement();
                             if ((!clInetAddress.isLoopbackAddress()) && (clInetAddress.getAddress().length == 4)) //如果该IP地址不是回环地址，且是IPv4的。
                             {
-                                ((EditText) m_MainLyotViewPt.findViewById(R.id.IPAddrEdTxtId)).setText(clInetAddress.getHostAddress());
-                                break OutSetIPAddrEdit;
+                                return clInetAddress.getHostAddress();
                             }
                         }
                     }
                 }
-
-                ((EditText) m_MainLyotViewPt.findViewById(R.id.IPAddrEdTxtId)).setText("0.0.0.0"); //如果没有获取到IP地址，就设置为本地地址。
-            }
         } catch (SocketException e) {
+            throw new RuntimeException(e);
         }
-
-
-        //设置默认设置
-        //TODO: 效果等级
-//        OnClickUseEffectSuperRdBtn(null);   //默认效果等级：超。
-//        OnClickUseBitrateSuperRdBtn(null);  //默认比特率等级：超。
-
-        //获取扩展目录完整绝对路径字符串。
-        {
-            if (getExternalFilesDir(null) != null) {
-                m_ExternalDirFullAbsPathStrPt = getExternalFilesDir(null).getPath();
-            } else {
-                m_ExternalDirFullAbsPathStrPt = Environment.getExternalStorageDirectory().getPath() + "/Android/data/" + getApplicationContext().getPackageName();
-            }
-
-            String p_InfoStrPt = "扩展目录完整绝对路径：" + m_ExternalDirFullAbsPathStrPt;
-            Log.i(m_CurClsNameStrPt, p_InfoStrPt);
-            Message p_MessagePt = new Message();
-            p_MessagePt.what = MainActivityHandler.Msg.ShowLog.ordinal();
-            p_MessagePt.obj = p_InfoStrPt;
-            m_MainActivityHandlerPt.sendMessage(p_MessagePt);
-        }
+        return "0.0.0.0"; //如果没有获取到IP地址，就设置为本地地址。
     }
 
     //主界面返回键消息。
@@ -282,7 +162,7 @@ public class MainActivity extends AppCompatActivity {
             Log.i(m_CurClsNameStrPt, "开始启动媒体处理线程。");
 
             //创建媒体处理线程。
-            m_MyMediaPocsThrdPt = new MyMediaPocsThrd(this, m_MainActivityHandlerPt);
+//            m_MyMediaPocsThrdPt = new MyMediaPocsThrd(this, m_MainActivityHandlerPt);
 
             //设置网络。
             {

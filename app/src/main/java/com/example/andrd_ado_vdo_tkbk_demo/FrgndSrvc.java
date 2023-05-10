@@ -5,6 +5,7 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.Build;
@@ -15,11 +16,11 @@ import android.support.v4.app.NotificationCompat;
 //前台服务。
 public class FrgndSrvc extends Service
 {
-    MainActivity m_MainActivityPt; //存放主界面的指针。
+    Context m_MainActivityPt; //存放主界面的指针。
 
     public class FrgndSrvcBinder extends Binder
     {
-        public void SetForeground( MainActivity MainActivityPt )
+        public void SetForeground(Context MainActivityPt )
         {
             m_MainActivityPt = MainActivityPt;
 
@@ -27,7 +28,7 @@ public class FrgndSrvc extends Service
 
 
             //创建通知。
-            PendingIntent pendingIntent = PendingIntent.getActivity( m_MainActivityPt, 0, new Intent( m_MainActivityPt, MainActivity.class ), PendingIntent.FLAG_IMMUTABLE );
+            PendingIntent pendingIntent = PendingIntent.getActivity( m_MainActivityPt, 0, new Intent(m_MainActivityPt, MainActivity.class ), PendingIntent.FLAG_IMMUTABLE );
             Notification notification =
                     new NotificationCompat
                             .Builder( m_MainActivityPt, "status" ) //Android API 14及以上版本使用。

@@ -1,9 +1,29 @@
 package com.example.andrd_ado_vdo_tkbk_demo;
 
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.ServiceConnection;
+import android.os.Handler;
+import android.os.IBinder;
+import android.os.Message;
+import android.os.Vibrator;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Enumeration;
 
 import HeavenTao.Media.MediaPocsThrd;
 
@@ -11,7 +31,19 @@ public class VideoTalkActivity extends AppCompatActivity {
 
     private static final String TAG = "VideoTalkActivity";
 
-    private MyMediaPocsThrd mMyMediaPocsThrd;
+    String m_CurClsNameStrPt = this.getClass().getSimpleName(); //存放当前类名称字符串。
+
+
+    public MyMediaPocsThrd mMyMediaPocsThrd;
+
+    View m_MainLyotViewPt; //存放主布局视图的指针。
+
+    View m_CurActivityLyotViewPt; //存放当前界面布局视图的指针。
+    MyMediaPocsThrd m_MyMediaPocsThrdPt; //存放媒体处理线程的指针。
+    VideoTalkHandler m_VideoTalkHandlerPt; //存放主界面消息处理的指针。
+
+    String m_ExternalDirFullAbsPathStrPt; //存放扩展目录完整绝对路径字符串的指针。
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -21,19 +53,47 @@ public class VideoTalkActivity extends AppCompatActivity {
         //请求权限。
         MediaPocsThrd.RqstPrmsn(this, 1, 1, 1, 1, 0, 1, 1, 1, 1);
 
+
+        //初始化消息处理。
+        m_VideoTalkHandlerPt = new VideoTalkHandler();
+        m_VideoTalkHandlerPt.m_MainActivityPt = this;
+
         //创建媒体处理线程。
-        mMyMediaPocsThrd = new MyMediaPocsThrd(this, m_MainActivityHandlerPt);
+        mMyMediaPocsThrd = new MyMediaPocsThrd(this, null);
 
 
     }
 
+    private String getIpAddr() {
+        //设置IP地址编辑框的内容。
+        try {
+            //遍历所有的网络接口设备。
+            for (Enumeration<NetworkInterface> clEnumerationNetworkInterface = NetworkInterface.getNetworkInterfaces(); clEnumerationNetworkInterface.hasMoreElements(); ) {
+                NetworkInterface clNetworkInterface = clEnumerationNetworkInterface.nextElement();
+                if (clNetworkInterface.getName().compareTo("usbnet0") != 0) //如果该网络接口设备不是USB接口对应的网络接口设备。
+                {
+                    //遍历该网络接口设备所有的IP地址。
+                    for (Enumeration<InetAddress> enumIpAddr = clNetworkInterface.getInetAddresses(); enumIpAddr.hasMoreElements(); ) {
+                        InetAddress clInetAddress = enumIpAddr.nextElement();
+                        if ((!clInetAddress.isLoopbackAddress()) && (clInetAddress.getAddress().length == 4)) //如果该IP地址不是回环地址，且是IPv4的。
+                        {
+                            return clInetAddress.getHostAddress();
+                        }
+                    }
+                }
+            }
+        } catch (SocketException e) {
+            throw new RuntimeException(e);
+        }
+        return "0.0.0.0"; //如果没有获取到IP地址，就设置为本地地址。
+    }
 
     private void setNetWork() {
-        mMyMediaPocsThrd = new MyMediaPocsThrd();
+//        mMyMediaPocsThrd = new MyMediaPocsThrd();
         mMyMediaPocsThrd.start();
     }
 
-    MyMediaPocsThrd m_MyMediaPocsThrdPt;   //
+//    MyMediaPocsThrd m_MyMediaPocsThrdPt;   //
     /**
      * 创建服务端 (如果IP地址不是本机地址，那么就是创建客户端，并连接服务端)
      *
@@ -47,7 +107,7 @@ public class VideoTalkActivity extends AppCompatActivity {
             Log.i(m_CurClsNameStrPt, "开始启动媒体处理线程。");
 
             //创建媒体处理线程。
-            m_MyMediaPocsThrdPt = new MyMediaPocsThrd(this, m_MainActivityHandlerPt);
+            m_MyMediaPocsThrdPt = new MyMediaPocsThrd(this, m_VideoTalkHandlerPt);
 
             //设置网络。
             {
@@ -294,6 +354,21 @@ public class VideoTalkActivity extends AppCompatActivity {
 
 
 
+    @Override
+    public void onBackPressed() {
+        Log.i(m_CurClsNameStrPt, "onBackPressed");
+
+        if (m_CurActivityLyotViewPt == m_MainLyotViewPt) {
+            Log.i(m_CurClsNameStrPt, "用户在主界面按下返回键，本软件退出。");
+            if (m_MyMediaPocsThrdPt != null) {
+                Log.i(m_CurClsNameStrPt, "开始请求并等待媒体处理线程退出。");
+                m_MyMediaPocsThrdPt.m_IsInterrupt = 1;
+                m_MyMediaPocsThrdPt.RqirExit(1, 1);
+                Log.i(m_CurClsNameStrPt, "结束请求并等待媒体处理线程退出。");
+            }
+//            System.exit(0);
+        }
+    }
 
 
 }
