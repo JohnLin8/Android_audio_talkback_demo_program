@@ -2,7 +2,7 @@ package HeavenTao.Sokt;
 
 import HeavenTao.Data.*;
 
-//本端高级UDP协议套接字。Advanced UDP Socket。
+//本端高级UDP协议套接字。
 public class AudpSokt
 {
     private long m_AudpSoktPt; //存放本端高级UDP协议套接字的指针。
