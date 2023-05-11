@@ -8,7 +8,7 @@ android {
         applicationId "com.example.andrd_ado_vdo_tkbk_demo"
 
         //minSdkVersion 9
-        minSdkVersion 14
+        minSdkVersion 19
         //noinspection ExpiredTargetSdkVersion
         targetSdk 26
         versionCode 1
