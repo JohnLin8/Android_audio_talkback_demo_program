@@ -14,8 +14,8 @@
         android:orientation="vertical"
         app:layout_constraintGuide_percent="0.8" />
 
-    <SurfaceView
-        android:id="@+id/mainSurfaceView"
+    <HeavenTao.Media.HTSurfaceView
+        android:id="@+id/outputVideoView"
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -23,8 +23,8 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <SurfaceView
-        android:id="@+id/surfaceView2"
+    <HeavenTao.Media.HTSurfaceView
+        android:id="@+id/inputVideoView"
         android:layout_width="0dp"
         android:layout_height="150dp"
         app:layout_constraintEnd_toEndOf="parent"
@@ -41,7 +41,7 @@
         android:textSize="18sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="@+id/guideline"
-        app:layout_constraintTop_toBottomOf="@+id/surfaceView2" />
+        app:layout_constraintTop_toBottomOf="@+id/inputVideoView" />
 
     <TextView
         android:id="@+id/tvMyIP"
@@ -74,13 +74,13 @@
     <EditText
         android:id="@+id/editTextNumber"
         android:layout_width="80dp"
-        android:layout_height="30dp"
+        android:layout_height="48dp"
         android:layout_marginTop="10dp"
         android:ems="4"
         android:inputType="number"
         android:text="189"
         android:textAlignment="center"
-        android:gravity="center_horizontal"
+        android:gravity="center"
         android:textColor="@color/white"
         android:textSize="22sp"
         android:background="@color/black"

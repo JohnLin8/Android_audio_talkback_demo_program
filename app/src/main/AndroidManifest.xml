@@ -39,9 +39,6 @@
             </intent-filter>
         </activity>
 
-        <service
-            android:name=".FrgndSrvc"
-            android:exported="false" />
     </application>
 
 </manifest>

@@ -1,49 +1,92 @@
 package com.example.andrd_ado_vdo_tkbk_demo;
 
-import android.app.Activity;
-import android.app.AlertDialog;
-import android.content.ComponentName;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.ServiceConnection;
+import android.os.Environment;
 import android.os.Handler;
-import android.os.IBinder;
 import android.os.Message;
-import android.os.Vibrator;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
-import android.widget.LinearLayout;
-import android.widget.TextView;
+import android.view.SurfaceView;
 
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Enumeration;
 
+import HeavenTao.Media.HTSurfaceView;
 import HeavenTao.Media.MediaPocsThrd;
 
 public class VideoTalkActivity extends AppCompatActivity {
 
     private static final String TAG = "VideoTalkActivity";
 
-    String m_CurClsNameStrPt = this.getClass().getSimpleName(); //存放当前类名称字符串。
+    private static MyMediaPocsThrd mMyMediaProcessThread;   //媒体处理线程
+    private VideoTalkHandler mVideoTalkHandler;
 
+    private String mExternalDirFullAbsPath;   //存放扩展目录完整绝对路径字符串的指针。
 
-    public MyMediaPocsThrd mMyMediaPocsThrd;
+    private HTSurfaceView mVideoInputView, mVideoOutputView;
 
-    View m_MainLyotViewPt; //存放主布局视图的指针。
+    public enum Msg {
+        MediaPocsThrdInit, //主界面消息：初始化媒体处理线程。
+        MediaPocsThrdDstoy, //主界面消息：销毁媒体处理线程。
+        RqstCnctDlgInit, //主界面消息：初始化请求连接对话框。
+        RqstCnctDlgDstoy, //主界面消息：销毁请求连接对话框。
+        PttBtnInit, //主界面消息：初始化一键即按即通按钮。
+        PttBtnDstoy, //主界面消息：销毁一键即按即通按钮。
+        ShowLog, //主界面消息：显示日志。
+        Vibrate, //主界面消息：振动。
+    }
 
-    View m_CurActivityLyotViewPt; //存放当前界面布局视图的指针。
-    MyMediaPocsThrd m_MyMediaPocsThrdPt; //存放媒体处理线程的指针。
-    VideoTalkHandler m_VideoTalkHandlerPt; //存放主界面消息处理的指针。
+    private static class VideoTalkHandler extends Handler {
+        @Override
+        public void handleMessage(Message msg) {
+//            super.handleMessage(msg);
+            switch (Msg.values()[msg.what]) {
+                case MediaPocsThrdInit:    //主界面消息：初始化媒体处理线程。
+                {
+                    if (mMyMediaProcessThread.mTalkNetwork.m_IsCreateSrvrOrClnt == 1) {
+                        Log.i(TAG, "handleMessage: 创建服务端");
+                    } else {
+                        Log.i(TAG, "handleMessage: 创建客户端");
+                    }
+                    break;
+                }
+                case MediaPocsThrdDstoy:    //主界面消息：销毁媒体处理线程。
+                {
+                    mMyMediaProcessThread = null;
 
-    String m_ExternalDirFullAbsPathStrPt; //存放扩展目录完整绝对路径字符串的指针。
+                    break;
+                }
+                case RqstCnctDlgInit: {
+                    if (mMyMediaProcessThread.mTalkNetwork.m_IsCreateSrvrOrClnt == 1) {
+                        //如果是创建服务端
+                        //允许连接或拒绝连接选择
+                        Log.i(TAG, "handleMessage: 连接选择");
+                    } else {
+                        //如果是创建客户端
+                        Log.i(TAG, "handleMessage: 等待远端允许连接");
 
+                        //是否中断选择
+                    }
+                    break;
+                }
+                case RqstCnctDlgDstoy: {
+                    Log.i(TAG, "handleMessage: 请求连接对话框销毁");
+                    break;
+                }
+                case ShowLog: {
+                    Log.i(TAG, "handleMessage: 显示日志");
+
+                    break;
+                }
+                case Vibrate: {
+                    Log.i(TAG, "handleMessage: 振动");
+                    break;
+                }
+            }
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,13 +96,18 @@ public class VideoTalkActivity extends AppCompatActivity {
         //请求权限。
         MediaPocsThrd.RqstPrmsn(this, 1, 1, 1, 1, 0, 1, 1, 1, 1);
 
-
         //初始化消息处理。
-        m_VideoTalkHandlerPt = new VideoTalkHandler();
-        m_VideoTalkHandlerPt.m_MainActivityPt = this;
+        mVideoTalkHandler = new VideoTalkHandler();
 
-        //创建媒体处理线程。
-        mMyMediaPocsThrd = new MyMediaPocsThrd(this, null);
+        //视频显示View
+        mVideoInputView = findViewById(R.id.inputVideoView);
+        mVideoOutputView = findViewById(R.id.outputVideoView);
+
+        //获取外部存储器路径
+        getExternalDirPath();
+
+        // 创建服务器
+        createServerOrClient(1);
 
 
     }
@@ -88,82 +136,95 @@ public class VideoTalkActivity extends AppCompatActivity {
         return "0.0.0.0"; //如果没有获取到IP地址，就设置为本地地址。
     }
 
+    private void getExternalDirPath() {
+        //获取扩展目录完整绝对路径字符串。
+        {
+            if (getExternalFilesDir(null) != null) {
+                mExternalDirFullAbsPath = getExternalFilesDir(null).getPath();
+            } else {
+                mExternalDirFullAbsPath = Environment.getExternalStorageDirectory().getPath() + "/Android/data/" + getApplicationContext().getPackageName();
+            }
+
+            String p_InfoStrPt = "扩展目录完整绝对路径：" + mExternalDirFullAbsPath;
+            Log.i(TAG, p_InfoStrPt);
+        }
+    }
+
     private void setNetWork() {
 //        mMyMediaPocsThrd = new MyMediaPocsThrd();
-        mMyMediaPocsThrd.start();
+        mMyMediaProcessThread.start();
     }
 
 //    MyMediaPocsThrd m_MyMediaPocsThrdPt;   //
+
     /**
      * 创建服务端 (如果IP地址不是本机地址，那么就是创建客户端，并连接服务端)
-     *
      */
-    public void createService() {
-        int p_Rslt = -1; //存放本函数执行结果的值，为0表示成功，为非0表示失败。
+    public void createServerOrClient(int isServerOrClient) {
 
-
-        if (m_MyMediaPocsThrdPt == null) //如果媒体处理线程还没有启动。
+        if (mMyMediaProcessThread == null) //如果媒体处理线程还没有启动。
         {
-            Log.i(m_CurClsNameStrPt, "开始启动媒体处理线程。");
+            Log.i(TAG, "开始启动媒体处理线程。");
 
             //创建媒体处理线程。
-            m_MyMediaPocsThrdPt = new MyMediaPocsThrd(this, m_VideoTalkHandlerPt);
+            mMyMediaProcessThread = new MyMediaPocsThrd(this, mVideoTalkHandler);
 
             //设置网络。
             {
                 //设置IP地址字符串。
-                m_MyMediaPocsThrdPt.mTalkNetwork.m_IPAddrStrPt = "192.168.1.189";
+                mMyMediaProcessThread.mTalkNetwork.m_IPAddrStrPt = "192.168.1.189";
                 //设置端口字符串。
-                m_MyMediaPocsThrdPt.mTalkNetwork.m_PortStrPt = "9696";
+                mMyMediaProcessThread.mTalkNetwork.m_PortStrPt = "9696";
                 //设置使用什么传输协议。
-                m_MyMediaPocsThrdPt.mTalkNetwork.m_UseWhatXfrPrtcl = 1;  //0--TCP, 1--UDP
+                mMyMediaProcessThread.mTalkNetwork.m_UseWhatXfrPrtcl = 1;  //0--TCP, 1--UDP
                 //设置传输模式。
-                m_MyMediaPocsThrdPt.mTalkNetwork.m_XfrMode = 1;   //全双工
+                mMyMediaProcessThread.mTalkNetwork.m_XfrMode = 1;   //全双工
                 //设置最大连接次数。
-                m_MyMediaPocsThrdPt.mTalkNetwork.m_MaxCnctTimes = 5;
+                mMyMediaProcessThread.mTalkNetwork.m_MaxCnctTimes = 5;
                 //设置创建服务端或者客户端标记。
-                m_MyMediaPocsThrdPt.mTalkNetwork.m_IsCreateSrvrOrClnt = 1; //标记创建服务端--1, 连接服务端--0。
+                mMyMediaProcessThread.mTalkNetwork.m_IsCreateSrvrOrClnt = isServerOrClient; //标记创建服务端--1, 连接服务端--0。
                 //设置是否自动允许连接。
-                m_MyMediaPocsThrdPt.m_IsAutoAllowCnct = 1;
+                mMyMediaProcessThread.m_IsAutoAllowCnct = 1;
             }
 
             //设置是否使用链表。不使用链表
+
             //使用自己设计的自适应抖动缓冲器。
-            m_MyMediaPocsThrdPt.m_UseWhatRecvOtptFrm = 1;
+            mMyMediaProcessThread.m_UseWhatRecvOtptFrm = 1;
             {
                 //音频参数
-                m_MyMediaPocsThrdPt.m_AAjbPt.m_MinNeedBufFrmCnt = VideoTalkSettings.AdaptiveJitterBuffer.AUDIO_MIN_FRAME_NUM;
-                m_MyMediaPocsThrdPt.m_AAjbPt.m_MaxNeedBufFrmCnt = VideoTalkSettings.AdaptiveJitterBuffer.AUDIO_MAX_FRAME_NUM;
-                m_MyMediaPocsThrdPt.m_AAjbPt.m_MaxCntuLostFrmCnt = VideoTalkSettings.AdaptiveJitterBuffer.AUDIO_MAX_DROP_FRAME_NUM;
-                m_MyMediaPocsThrdPt.m_AAjbPt.m_AdaptSensitivity = VideoTalkSettings.AdaptiveJitterBuffer.AUDIO_ADAPTIVE_SENSITIVITY;
+                mMyMediaProcessThread.m_AAjbPt.m_MinNeedBufFrmCnt = VideoTalkSettings.AdaptiveJitterBuffer.AUDIO_MIN_FRAME_NUM;
+                mMyMediaProcessThread.m_AAjbPt.m_MaxNeedBufFrmCnt = VideoTalkSettings.AdaptiveJitterBuffer.AUDIO_MAX_FRAME_NUM;
+                mMyMediaProcessThread.m_AAjbPt.m_MaxCntuLostFrmCnt = VideoTalkSettings.AdaptiveJitterBuffer.AUDIO_MAX_DROP_FRAME_NUM;
+                mMyMediaProcessThread.m_AAjbPt.m_AdaptSensitivity = VideoTalkSettings.AdaptiveJitterBuffer.AUDIO_ADAPTIVE_SENSITIVITY;
                 //视频参数
-                m_MyMediaPocsThrdPt.m_VAjbPt.m_MinNeedBufFrmCnt = VideoTalkSettings.AdaptiveJitterBuffer.VIDEO_MIN_FRAME_NUM;
-                m_MyMediaPocsThrdPt.m_VAjbPt.m_MaxNeedBufFrmCnt = VideoTalkSettings.AdaptiveJitterBuffer.VIDEO_MAX_FRAME_NUM;
-                m_MyMediaPocsThrdPt.m_VAjbPt.m_AdaptSensitivity = VideoTalkSettings.AdaptiveJitterBuffer.VIDEO_ADAPTIVE_SENSITIVITY;
+                mMyMediaProcessThread.m_VAjbPt.m_MinNeedBufFrmCnt = VideoTalkSettings.AdaptiveJitterBuffer.VIDEO_MIN_FRAME_NUM;
+                mMyMediaProcessThread.m_VAjbPt.m_MaxNeedBufFrmCnt = VideoTalkSettings.AdaptiveJitterBuffer.VIDEO_MAX_FRAME_NUM;
+                mMyMediaProcessThread.m_VAjbPt.m_AdaptSensitivity = VideoTalkSettings.AdaptiveJitterBuffer.VIDEO_ADAPTIVE_SENSITIVITY;
             }
 
             //默认打印Logcat日志、显示Toast。
-            m_MyMediaPocsThrdPt.SetIsPrintLogcatShowToast(1, 1, this);
+            mMyMediaProcessThread.SetIsPrintLogcatShowToast(1, 1, this);
 
             //默认使用唤醒锁。
-            m_MyMediaPocsThrdPt.SetIsUseWakeLock(1);
+            mMyMediaProcessThread.SetIsUseWakeLock(1);
 
             //默认不要保存音视频输入输出到文件。
-            m_MyMediaPocsThrdPt.SetIsSaveAdoVdoInptOtptToAviFile(
-                    m_ExternalDirFullAbsPathStrPt + "/AdoVdoInptOtpt.avi",
+            mMyMediaProcessThread.SetIsSaveAdoVdoInptOtptToAviFile(
+                    mExternalDirFullAbsPath + "/AdoVdoInptOtpt.avi",
                     8 * 1024, 0, 0, 0, 0);
 
             //设置音频输入。
-            m_MyMediaPocsThrdPt.SetAdoInpt(16000, 20);
+            mMyMediaProcessThread.SetAdoInpt(16000, 20);
 
             //设置音频输入是否使用系统自带的声学回音消除器、噪音抑制器和自动增益控制器。
-            m_MyMediaPocsThrdPt.AdoInptSetIsUseSystemAecNsAgc(1);    //TODO: 是否使用系统自带的声学回音消除器、噪音抑制器和自动增益控制器。
+            mMyMediaProcessThread.AdoInptSetIsUseSystemAecNsAgc(1);    //TODO: 是否使用系统自带的声学回音消除器、噪音抑制器和自动增益控制器。
 
 
             //如果传输模式为实时全双工。
             {
                 //默认使用SpeexWebRtc三重声学回音消除器。
-                m_MyMediaPocsThrdPt.AdoInptSetUseSpeexWebRtcAec(
+                mMyMediaProcessThread.AdoInptSetUseSpeexWebRtcAec(
                         VideoTalkSettings.TripleEchoCanceller.MODE_SPEEX_WEBRTC_FLOAT,
                         VideoTalkSettings.TripleEchoCanceller.SPEEX_AEC_FILTER_LENGTH,
                         VideoTalkSettings.TripleEchoCanceller.SPEEX_AEC_USE_REVERSE,
@@ -194,10 +255,10 @@ public class VideoTalkActivity extends AppCompatActivity {
             //设置音频输入是否使用WebRtc浮点版噪音抑制器。(默认不使用WebRtc浮点版噪音抑制器)
 
             //设置音频输入是否使用RNNoise噪音抑制器。(默认使用RNNoise噪音抑制器)
-            m_MyMediaPocsThrdPt.AdoInptSetUseRNNoise();
+            mMyMediaProcessThread.AdoInptSetUseRNNoise();
 
             //设置音频输入是否使用Speex预处理器。(默认使用Speex预处理器)
-            m_MyMediaPocsThrdPt.AdoInptSetIsUseSpeexPrpocs(
+            mMyMediaProcessThread.AdoInptSetIsUseSpeexPrpocs(
                     VideoTalkSettings.SpeexPreprocessor.USE_SPEEX_PREPROCESSOR,
                     VideoTalkSettings.SpeexPreprocessor.USE_VOICEACTIVITY_DETECTION,
                     VideoTalkSettings.SpeexPreprocessor.VAD_PROB_START_SPEECH,
@@ -211,7 +272,7 @@ public class VideoTalkActivity extends AppCompatActivity {
             //设置音频输入是否使用PCM原始数据。
 
             //设置音频输入是否使用Speex编码器。(默认使用Speex编码器)
-            m_MyMediaPocsThrdPt.AdoInptSetUseSpeexEncd(
+            mMyMediaProcessThread.AdoInptSetUseSpeexEncd(
                     1,
                     10,
                     10,
@@ -221,73 +282,73 @@ public class VideoTalkActivity extends AppCompatActivity {
             //设置音频输入是否使用Opus编码器。
 
             //设置音频输入是否保存音频到文件。
-            m_MyMediaPocsThrdPt.AdoInptSetIsSaveAdoToWaveFile(
+            mMyMediaProcessThread.AdoInptSetIsSaveAdoToWaveFile(
                     0,
-                    m_ExternalDirFullAbsPathStrPt + "/AdoInpt.wav",
-                    m_ExternalDirFullAbsPathStrPt + "/AdoRslt.wav",
+                    mExternalDirFullAbsPath + "/AdoInpt.wav",
+                    mExternalDirFullAbsPath + "/AdoRslt.wav",
                     8 * 1024);
 
             //设置音频输入是否绘制音频波形到Surface。
-            m_MyMediaPocsThrdPt.AdoInptSetIsDrawAdoWavfmToSurface(
+            mMyMediaProcessThread.AdoInptSetIsDrawAdoWavfmToSurface(
                     0,
                     null,
                     null
             );
 
             //设置音频输入是否静音。
-            m_MyMediaPocsThrdPt.AdoInptSetIsMute(0);
+            mMyMediaProcessThread.AdoInptSetIsMute(0);
 
             //设置音频输出。
-            m_MyMediaPocsThrdPt.SetAdoOtpt(16000, 20);
-            m_MyMediaPocsThrdPt.AddAdoOtptStrm(0);
+            mMyMediaProcessThread.SetAdoOtpt(16000, 20);
+            mMyMediaProcessThread.AddAdoOtptStrm(0);
 
             //设置音频输出是否使用PCM原始数据。
             //m_MyMediaPocsThrdPt.AdoOtptSetStrmUsePcm(0);
 
 
             //设置音频输出是否使用Speex解码器。
-            m_MyMediaPocsThrdPt.AdoOtptSetStrmUseSpeexDecd(0, 1);
+            mMyMediaProcessThread.AdoOtptSetStrmUseSpeexDecd(0, 1);
 
 
             //设置音频输出是否使用Opus解码器。
             //m_MyMediaPocsThrdPt.AdoOtptSetStrmUseOpusDecd(0);
 
             //设置音频输出流是否使用。
-            m_MyMediaPocsThrdPt.AdoOtptSetStrmIsUse(0, 1);
+            mMyMediaProcessThread.AdoOtptSetStrmIsUse(0, 1);
 
             //设置音频输出是否保存音频到文件。
-            m_MyMediaPocsThrdPt.AdoOtptSetIsSaveAdoToWaveFile(
+            mMyMediaProcessThread.AdoOtptSetIsSaveAdoToWaveFile(
                     0,
-                    m_ExternalDirFullAbsPathStrPt + "/AdoOtpt.wav",
+                    mExternalDirFullAbsPath + "/AdoOtpt.wav",
                     8 * 1024);
 
             //设置音频输出是否绘制音频波形到Surface。
-            m_MyMediaPocsThrdPt.AdoOtptSetIsDrawAdoWavfmToSurface(
+            mMyMediaProcessThread.AdoOtptSetIsDrawAdoWavfmToSurface(
                     0,
                     null);
 
             //设置音频输出使用的设备。
-            m_MyMediaPocsThrdPt.AdoOtptSetUseDvc(
+            mMyMediaProcessThread.AdoOtptSetUseDvc(
                     0,
                     0);
 
             //设置音频输出是否静音。
-            m_MyMediaPocsThrdPt.AdoOtptSetIsMute(0);
+            mMyMediaProcessThread.AdoOtptSetIsMute(0);
 
             //设置视频输入。
-            m_MyMediaPocsThrdPt.SetVdoInpt(
+            mMyMediaProcessThread.SetVdoInpt(
                     12,
                     640,
                     480,
                     0,
-                    null);   //TODO: HTSurfaceView
+                    mVideoInputView);   //TODO: HTSurfaceView
 
 
             //设置视频输入是否使用YU12原始数据。
             //m_MyMediaPocsThrdPt.VdoInptSetUseYU12();
 
             //设置视频输入是否使用OpenH264编码器。
-            m_MyMediaPocsThrdPt.VdoInptSetUseOpenH264Encd(
+            mMyMediaProcessThread.VdoInptSetUseOpenH264Encd(
                     0,
                     60,
                     3,
@@ -297,78 +358,72 @@ public class VideoTalkActivity extends AppCompatActivity {
             //m_MyMediaPocsThrdPt.VdoInptSetUseSystemH264Encd(............);
 
             //设置视频输入使用的设备。
-            m_MyMediaPocsThrdPt.VdoInptSetUseDvc(
+            mMyMediaProcessThread.VdoInptSetUseDvc(
                     0,
                     -1,
                     -1);
 
             //设置视频输入是否黑屏。
-            m_MyMediaPocsThrdPt.VdoInptSetIsBlack(0);
+            mMyMediaProcessThread.VdoInptSetIsBlack(0);
 
             //设置视频输出。
-            m_MyMediaPocsThrdPt.VdoOtptAddStrm(0);
-            m_MyMediaPocsThrdPt.VdoOtptSetStrm(
+            mMyMediaProcessThread.VdoOtptAddStrm(0);
+            mMyMediaProcessThread.VdoOtptSetStrm(
                     0,
-                    null);    //TODO: HTSurfaceView
+                    mVideoOutputView);    //TODO: HTSurfaceView
 
             //设置视频输出是否使用YU12原始数据。
             //m_MyMediaPocsThrdPt.VdoOtptSetStrmUseYU12(0);
 
 
             //设置视频输出是否使用OpenH264解码器。
-            m_MyMediaPocsThrdPt.VdoOtptSetStrmUseOpenH264Decd(0, 0);
+            mMyMediaProcessThread.VdoOtptSetStrmUseOpenH264Decd(0, 0);
 
             //设置视频输出是否使用系统自带H264解码器。
             //m_MyMediaPocsThrdPt.VdoOtptSetStrmUseSystemH264Decd(0);
 
             //设置视频输出是否黑屏。
-            m_MyMediaPocsThrdPt.VdoOtptSetStrmIsBlack(
+            mMyMediaProcessThread.VdoOtptSetStrmIsBlack(
                     0,
                     0);
 
             //设置视频输出流是否使用。
-            m_MyMediaPocsThrdPt.VdoOtptSetStrmIsUse(0, 1);
+            mMyMediaProcessThread.VdoOtptSetStrmIsUse(0, 1);
 
             //设置本端对讲模式。
-            m_MyMediaPocsThrdPt.SendUserMsg(MyMediaPocsThrd.UserMsgTyp.LclTkbkMode, MyMediaPocsThrd.TkbkMode.AdoVdo);
+            mMyMediaProcessThread.SendUserMsg(MyMediaPocsThrd.UserMsgTyp.LclTkbkMode, MyMediaPocsThrd.TkbkMode.AdoVdo);
 
             //设置是否保存设置到文件。
-            //m_MyMediaPocsThrdPt.SaveStngToFile(m_ExternalDirFullAbsPathStrPt + "/Setting.txt");
+            //TODO 设置保存到文件
+            mMyMediaProcessThread.SaveStngToFile(mExternalDirFullAbsPath + "/Setting.txt");
 
             //启动媒体处理线程。
-            m_MyMediaPocsThrdPt.start();
-            p_Rslt = 0;
-            Log.i(m_CurClsNameStrPt, "启动媒体处理线程完毕。");
-        } else {
-            Log.i(m_CurClsNameStrPt, "开始请求并等待媒体处理线程退出。");
-            m_MyMediaPocsThrdPt.m_IsInterrupt = 1;
-            m_MyMediaPocsThrdPt.RqirExit(1, 1);
-            Log.i(m_CurClsNameStrPt, "结束请求并等待媒体处理线程退出。");
+            mMyMediaProcessThread.start();
+            Log.i(TAG, "启动媒体处理线程完毕。");
         }
 
-        if (p_Rslt != 0) //如果启动媒体处理线程失败。
-        {
-            m_MyMediaPocsThrdPt = null;
-        }
     }
 
-
+    private void exitVideoTalkServer() {
+        Log.i(TAG, "开始请求并等待媒体处理线程退出。");
+        mMyMediaProcessThread.m_IsInterrupt = 1;
+        mMyMediaProcessThread.RqirExit(1, 1);
+        Log.i(TAG, "结束请求并等待媒体处理线程退出。");
+        mMyMediaProcessThread = null;
+    }
 
     @Override
-    public void onBackPressed() {
-        Log.i(m_CurClsNameStrPt, "onBackPressed");
-
-        if (m_CurActivityLyotViewPt == m_MainLyotViewPt) {
-            Log.i(m_CurClsNameStrPt, "用户在主界面按下返回键，本软件退出。");
-            if (m_MyMediaPocsThrdPt != null) {
-                Log.i(m_CurClsNameStrPt, "开始请求并等待媒体处理线程退出。");
-                m_MyMediaPocsThrdPt.m_IsInterrupt = 1;
-                m_MyMediaPocsThrdPt.RqirExit(1, 1);
-                Log.i(m_CurClsNameStrPt, "结束请求并等待媒体处理线程退出。");
-            }
-//            System.exit(0);
+    protected void onDestroy() {
+        super.onDestroy();
+        Log.i(TAG, "退出媒体处理");
+        if (mMyMediaProcessThread != null) {
+            Log.i(TAG, "开始请求并等待媒体处理线程退出。");
+            mMyMediaProcessThread.m_IsInterrupt = 1;
+            mMyMediaProcessThread.RqirExit(1, 1);
+            Log.i(TAG, "结束请求并等待媒体处理线程退出。");
+        }
+        if (mVideoTalkHandler != null) {
+            mVideoTalkHandler = null;
         }
     }
-
-
 }

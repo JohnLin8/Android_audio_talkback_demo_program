@@ -2,6 +2,8 @@ package com.example.andrd_ado_vdo_tkbk_demo;
 
 
 
+import static com.example.andrd_ado_vdo_tkbk_demo.VideoTalkActivity.*;
+
 import android.app.Activity;
 import android.os.Handler;
 import android.os.Message;
@@ -18,17 +20,17 @@ import HeavenTao.Sokt.*;
 
 //我的媒体处理线程。
 public class MyMediaPocsThrd extends MediaPocsThrd {
-    Activity m_MainActivityPt; //存放主界面的指针。
-    Handler m_MainActivityHandlerPt; //存放主界面消息处理的指针。
+//    Activity m_MainActivityPt; //存放主界面的指针。
+    private final Handler mHandler; //存放主界面消息处理的指针。
     public int m_IsInterrupt; //存放是否中断，为0表示未中断，为1表示已中断。
-    private Message p_messagePt;
+//    private Message p_messagePt;
 
     static class TalkNetwork //存放网络。
     {
         String m_IPAddrStrPt; //存放IP地址字符串的指针。
         String m_PortStrPt; //存放端口字符串的指针。
-        int m_XfrMode;     //存放传输模式，为0表示实时半双工（一键通），为1表示实时全双工。
-        int m_MaxCnctTimes; //存放最大连接次数，取值区间为[1,2147483647]。
+        int m_XfrMode;         //存放传输模式，为0表示实时半双工（一键通），为1表示实时全双工。
+        int m_MaxCnctTimes;    //存放最大连接次数，取值区间为[1,2147483647]。
         int m_UseWhatXfrPrtcl; //存放使用什么传输协议，为0表示TCP协议，为1表示UDP协议。
         int m_IsCreateSrvrOrClnt;  //存放创建服务端或者客户端标记，为1表示创建服务端，为0表示创建客户端。
         TcpSrvrSokt m_TcpSrvrSoktPt; //存放本端TCP协议服务端套接字的指针。
@@ -113,12 +115,10 @@ public class MyMediaPocsThrd extends MediaPocsThrd {
         PttBtnUp,    //一键即按即通按钮弹起。
     }
 
-    MyMediaPocsThrd(Activity MainActivityPt, Handler MainActivityHandlerPt) {
-        super(MainActivityPt);
-
-        m_MainActivityPt = MainActivityPt; //设置主界面的指针。
-        m_MainActivityHandlerPt = MainActivityHandlerPt; //设置主界面消息处理的指针。
-        m_IsInterrupt = 0; //设置未中断。
+    MyMediaPocsThrd(Activity activity, Handler handler) {
+        super(activity);        //主界面的context要传进来
+        this.mHandler = handler;           //设置主界面消息处理的指针。
+        m_IsInterrupt = 0;     //设置未中断。
 
         m_LclTkbkMode = TkbkMode.None;
         m_RmtTkbkMode = TkbkMode.None;
@@ -508,7 +508,7 @@ public class MyMediaPocsThrd extends MediaPocsThrd {
     private void toSendMessage4() {
         Message p_messagePt = new Message();
         p_messagePt.what = Msg.MediaPocsThrdInit.ordinal();
-        m_MainActivityHandlerPt.sendMessage(p_messagePt);
+        mHandler.sendMessage(p_messagePt);
     }
 
     private void initData() {
@@ -529,13 +529,13 @@ public class MyMediaPocsThrd extends MediaPocsThrd {
         Message p_MessagePt = new Message();
         p_MessagePt.what = Msg.RqstCnctDlgInit.ordinal();
         p_MessagePt.obj = p_RmtNodeAddrPt.m_Val;
-        m_MainActivityHandlerPt.sendMessage(p_MessagePt);
+        mHandler.sendMessage(p_MessagePt);
     }
 
     private void toSendMessage2() {
         Message p_MessagePt = new Message();
         p_MessagePt.what = Msg.RqstCnctDlgDstoy.ordinal();
-        m_MainActivityHandlerPt.sendMessage(p_MessagePt);
+        mHandler.sendMessage(p_MessagePt);
     }
 
     private void toSendMessage1(String p_InfoStrPt) {
@@ -543,7 +543,7 @@ public class MyMediaPocsThrd extends MediaPocsThrd {
         Message p_MessagePt = new Message();
         p_MessagePt.what = Msg.ShowLog.ordinal();
         p_MessagePt.obj = p_InfoStrPt;
-        m_MainActivityHandlerPt.sendMessage(p_MessagePt);
+        mHandler.sendMessage(p_MessagePt);
     }
 
     private void toSendMessage(String p_InfoStrPt) {
@@ -551,7 +551,7 @@ public class MyMediaPocsThrd extends MediaPocsThrd {
         Message p_MessagePt = new Message();
         p_MessagePt.what = Msg.ShowLog.ordinal();
         p_MessagePt.obj = p_InfoStrPt;
-        m_MainActivityHandlerPt.sendMessage(p_MessagePt);
+        mHandler.sendMessage(p_MessagePt);
     }
 
     //用户定义的处理函数。
@@ -906,19 +906,19 @@ public class MyMediaPocsThrd extends MediaPocsThrd {
                     Message p_MessagePt = new Message();
                     p_MessagePt.what = Msg.ShowLog.ordinal();
                     p_MessagePt.obj = p_InfoStrPt;
-                    m_MainActivityHandlerPt.sendMessage(p_MessagePt);
+                    mHandler.sendMessage(p_MessagePt);
                 }
 
                 RqirExit(2, 0); //请求重启。
                 {
                     Message p_MessagePt = new Message();
                     p_MessagePt.what = Msg.Vibrate.ordinal();
-                    m_MainActivityHandlerPt.sendMessage(p_MessagePt);
+                    mHandler.sendMessage(p_MessagePt);
                 } //向主界面发送振动的消息。
                 if (mTalkNetwork.m_XfrMode == 0) {
                     Message p_MessagePt = new Message();
                     p_MessagePt.what = Msg.PttBtnDstoy.ordinal();
-                    m_MainActivityHandlerPt.sendMessage(p_MessagePt);
+                    mHandler.sendMessage(p_MessagePt);
                 } //向主界面发送销毁一键即按即通按钮的消息。
             } else if ((m_IsInterrupt == 0) && (m_ExitCode == ExitCode.UserInit) && (m_RqstCnctRslt == 2)) {
                 String p_InfoStrPt = "由于是创建服务端，且未中断，且退出码为调用用户定义的初始化函数失败，且请求连接的结果为拒绝，表示是拒绝本次连接，本线程重新初始化来继续保持监听。";
@@ -927,7 +927,7 @@ public class MyMediaPocsThrd extends MediaPocsThrd {
                     Message p_MessagePt = new Message();
                     p_MessagePt.what = Msg.ShowLog.ordinal();
                     p_MessagePt.obj = p_InfoStrPt;
-                    m_MainActivityHandlerPt.sendMessage(p_MessagePt);
+                    mHandler.sendMessage(p_MessagePt);
                 }
 
                 RqirExit(2, 0); //请求重启。
@@ -937,7 +937,7 @@ public class MyMediaPocsThrd extends MediaPocsThrd {
                 if (mTalkNetwork.m_XfrMode == 0) {
                     Message p_MessagePt = new Message();
                     p_MessagePt.what = Msg.PttBtnDstoy.ordinal();
-                    m_MainActivityHandlerPt.sendMessage(p_MessagePt);
+                    mHandler.sendMessage(p_MessagePt);
                 } //向主界面发送销毁一键即按即通按钮的消息。
             } else if ((m_IsInterrupt == 0) && ((m_ExitCode == ExitCode.MediaMsgPocs) || (m_ExitCode == ExitCode.AdoVdoInptOtptPocs))) {
                 String p_InfoStrPt = "由于是创建服务端，且未中断，且退出码为媒体消息处理失败或音视频输入输出处理失败，表示是媒体消息处理失败或连接异常断开，本线程重新初始化来继续保持监听。";
@@ -946,36 +946,36 @@ public class MyMediaPocsThrd extends MediaPocsThrd {
                     Message p_MessagePt = new Message();
                     p_MessagePt.what = Msg.ShowLog.ordinal();
                     p_MessagePt.obj = p_InfoStrPt;
-                    m_MainActivityHandlerPt.sendMessage(p_MessagePt);
+                    mHandler.sendMessage(p_MessagePt);
                 }
 
                 RqirExit(2, 0); //请求重启。
                 {
                     Message p_MessagePt = new Message();
                     p_MessagePt.what = Msg.Vibrate.ordinal();
-                    m_MainActivityHandlerPt.sendMessage(p_MessagePt);
+                    mHandler.sendMessage(p_MessagePt);
                 } //向主界面发送振动的消息。
                 if (mTalkNetwork.m_XfrMode == 0) {
                     Message p_MessagePt = new Message();
                     p_MessagePt.what = Msg.PttBtnDstoy.ordinal();
-                    m_MainActivityHandlerPt.sendMessage(p_MessagePt);
+                    mHandler.sendMessage(p_MessagePt);
                 } //向主界面发送销毁一键即按即通按钮的消息。
             } else //其他情况，本线程直接退出。
             {
                 {
                     Message p_MessagePt = new Message();
                     p_MessagePt.what = Msg.MediaPocsThrdDstoy.ordinal();
-                    m_MainActivityHandlerPt.sendMessage(p_MessagePt);
+                    mHandler.sendMessage(p_MessagePt);
                 } //向主界面发送销毁媒体处理线程的消息。
                 {
                     Message p_MessagePt = new Message();
                     p_MessagePt.what = Msg.Vibrate.ordinal();
-                    m_MainActivityHandlerPt.sendMessage(p_MessagePt);
+                    mHandler.sendMessage(p_MessagePt);
                 } //向主界面发送振动的消息。
                 if (mTalkNetwork.m_XfrMode == 0) {
                     Message p_MessagePt = new Message();
                     p_MessagePt.what = Msg.PttBtnDstoy.ordinal();
-                    m_MainActivityHandlerPt.sendMessage(p_MessagePt);
+                    mHandler.sendMessage(p_MessagePt);
                 } //向主界面发送销毁一键即按即通按钮的消息。
             }
         } else if (mTalkNetwork.m_IsCreateSrvrOrClnt == 0) //如果是创建客户端。
@@ -987,31 +987,31 @@ public class MyMediaPocsThrd extends MediaPocsThrd {
                     Message p_MessagePt = new Message();
                     p_MessagePt.what = Msg.ShowLog.ordinal();
                     p_MessagePt.obj = p_InfoStrPt;
-                    m_MainActivityHandlerPt.sendMessage(p_MessagePt);
+                    mHandler.sendMessage(p_MessagePt);
                 }
 
                 RqirExit(2, 0); //请求重启。
                 if (mTalkNetwork.m_XfrMode == 0) {
                     Message p_MessagePt = new Message();
                     p_MessagePt.what = Msg.PttBtnDstoy.ordinal();
-                    m_MainActivityHandlerPt.sendMessage(p_MessagePt);
+                    mHandler.sendMessage(p_MessagePt);
                 } //向主界面发送销毁一键即按即通按钮的消息。
             } else //其他情况，本线程直接退出。
             {
                 {
                     Message p_MessagePt = new Message();
                     p_MessagePt.what = Msg.MediaPocsThrdDstoy.ordinal();
-                    m_MainActivityHandlerPt.sendMessage(p_MessagePt);
+                    mHandler.sendMessage(p_MessagePt);
                 } //向主界面发送销毁媒体处理线程的消息。
                 {
                     Message p_MessagePt = new Message();
                     p_MessagePt.what = Msg.Vibrate.ordinal();
-                    m_MainActivityHandlerPt.sendMessage(p_MessagePt);
+                    mHandler.sendMessage(p_MessagePt);
                 } //向主界面发送振动的消息。
                 if (mTalkNetwork.m_XfrMode == 0) {
                     Message p_MessagePt = new Message();
                     p_MessagePt.what = Msg.PttBtnDstoy.ordinal();
-                    m_MainActivityHandlerPt.sendMessage(p_MessagePt);
+                    mHandler.sendMessage(p_MessagePt);
                 } //向主界面发送销毁一键即按即通按钮的消息。
             }
         }
@@ -1020,7 +1020,7 @@ public class MyMediaPocsThrd extends MediaPocsThrd {
     private void toSendMessage6() {
         Message p_MessagePt = new Message();
         p_MessagePt.what = Msg.Vibrate.ordinal();
-        m_MainActivityHandlerPt.sendMessage(p_MessagePt);
+        mHandler.sendMessage(p_MessagePt);
     }
 
     //设置对讲模式。

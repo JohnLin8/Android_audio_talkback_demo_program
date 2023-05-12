@@ -47,7 +47,7 @@ public class HTSurfaceView extends SurfaceView
         {
             m_WidthToHeightRatio = WidthToHeightRatio; //设置视频预览SurfaceView的宽高比。
 
-            post( new Runnable() //刷新SurfaceView的尺寸显示。
+            post( new Runnable()  //刷新SurfaceView的尺寸显示。
             {
                 @Override
                 public void run()
