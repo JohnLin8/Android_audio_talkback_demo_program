@@ -10,7 +10,7 @@ android {
         //minSdkVersion 9
         minSdkVersion 19
         //noinspection ExpiredTargetSdkVersion
-        targetSdk 26
+        targetSdk 21
         versionCode 1
         versionName "2023.05.10"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"

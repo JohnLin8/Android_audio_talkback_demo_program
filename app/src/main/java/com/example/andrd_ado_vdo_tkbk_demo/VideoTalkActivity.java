@@ -1,5 +1,6 @@
 package com.example.andrd_ado_vdo_tkbk_demo;
 
+import android.content.pm.ActivityInfo;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
@@ -7,6 +8,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.SurfaceView;
+import android.widget.TextView;
 
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -24,8 +26,8 @@ public class VideoTalkActivity extends AppCompatActivity {
     private VideoTalkHandler mVideoTalkHandler;
 
     private String mExternalDirFullAbsPath;   //存放扩展目录完整绝对路径字符串的指针。
-
     private HTSurfaceView mVideoInputView, mVideoOutputView;
+    private TextView mIpAddrTextView;
 
     public enum Msg {
         MediaPocsThrdInit, //主界面消息：初始化媒体处理线程。
@@ -92,6 +94,7 @@ public class VideoTalkActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_video_talk);
+//        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 
         //请求权限。
         MediaPocsThrd.RqstPrmsn(this, 1, 1, 1, 1, 0, 1, 1, 1, 1);
@@ -102,13 +105,17 @@ public class VideoTalkActivity extends AppCompatActivity {
         //视频显示View
         mVideoInputView = findViewById(R.id.inputVideoView);
         mVideoOutputView = findViewById(R.id.outputVideoView);
+        mIpAddrTextView = findViewById(R.id.tvMyIP);
 
         //获取外部存储器路径
         getExternalDirPath();
 
+        String mIpAddr = getIpAddr();
+        Log.i(TAG, "onCreate: IP地址：" + mIpAddr);
+        mIpAddrTextView.setText(mIpAddr);
+
         // 创建服务器
         createServerOrClient(1);
-
 
     }
 
@@ -172,9 +179,9 @@ public class VideoTalkActivity extends AppCompatActivity {
             //设置网络。
             {
                 //设置IP地址字符串。
-                mMyMediaProcessThread.mTalkNetwork.m_IPAddrStrPt = "192.168.1.189";
+                mMyMediaProcessThread.mTalkNetwork.m_IPAddrStrPt = getIpAddr();
                 //设置端口字符串。
-                mMyMediaProcessThread.mTalkNetwork.m_PortStrPt = "9696";
+                mMyMediaProcessThread.mTalkNetwork.m_PortStrPt = "12345";
                 //设置使用什么传输协议。
                 mMyMediaProcessThread.mTalkNetwork.m_UseWhatXfrPrtcl = 1;  //0--TCP, 1--UDP
                 //设置传输模式。
